@@ -94,15 +94,20 @@ footer { font-size: .78rem; color: var(--muted); }
 .check { display: flex; align-items: center; gap: .6rem; min-height: 44px; }
 .check input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; flex: none; }
 .check input[type=time] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: .4rem .6rem; margin-left: auto; }
-/* number dial (weight): a small drum you drag up or down; each row is 0.1 */
-.drum { height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; perspective: 260px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: ns-resize; }
-.drow { height: 28px; display: flex; align-items: center; justify-content: center; font: 500 1rem var(--display); font-variant-numeric: tabular-nums; }
-.drow.c { height: 52px; }
-.dbox { min-width: 7rem; height: 46px; padding: 0 1rem; box-sizing: border-box; border-radius: 14px; display: flex; align-items: baseline; justify-content: center; gap: .3rem; padding-top: 6px;
-  background: color-mix(in srgb, #69db7c 45%, var(--surface)); font: 700 1.6rem var(--display); transition: transform .15s, box-shadow .15s, background .15s; }
-.dbox span { font: 400 .85rem var(--body); color: var(--muted); }
-.dbox.set { background: #69db7c; transform: translateY(-2px); box-shadow: 0 6px 14px rgba(24, 34, 43, .25); }
-.drum:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 14px; }
+/* number dial (weight): a ruler you drag sideways; the value rides in a green bubble over the needle; each tick is 0.1 */
+.rul { position: relative; height: 130px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: ew-resize; }
+.rul::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, var(--surface), transparent 20%, transparent 80%, var(--surface)); }
+.rul:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
+.tk { position: absolute; top: 66px; border-radius: 2px; }
+.tl { position: absolute; top: 104px; width: 40px; margin-left: -20px; text-align: center; font-size: .75rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.needle { position: absolute; left: 50%; top: 58px; width: 4px; height: 52px; margin-left: -2px; border-radius: 2px; background: #69db7c; z-index: 1; }
+.bub { position: absolute; left: 50%; top: 2px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 2; transition: transform .15s; --bub: color-mix(in srgb, #69db7c 45%, var(--surface)); }
+.bub.set { transform: translateX(-50%) translateY(-2px); --bub: #69db7c; }
+.bub-box { height: 46px; box-sizing: border-box; padding: 7px 16px 0; border-radius: 14px; display: flex; align-items: baseline; gap: .25rem; background: var(--bub);
+  font: 700 1.5rem var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; transition: box-shadow .15s, background .15s; }
+.bub.set .bub-box { box-shadow: 0 6px 14px rgba(24, 34, 43, .25); }
+.bub-box span { font: 400 .8rem var(--body); color: #3d4a54; }
+.bub i { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid var(--bub); }
 /* indicator editor */
 .ind { display: flex; flex-direction: column; gap: .4rem; padding: .6rem 0; border-bottom: 1px solid var(--line); }
 .ind:last-child { border-bottom: 0; }
@@ -117,7 +122,7 @@ footer { font-size: .78rem; color: var(--muted); }
 .chips button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
 .grid .lbl, .avg span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hint { margin: 0; font-size: .85rem; color: var(--muted); overflow-wrap: anywhere; }
-@media (prefers-reduced-motion: reduce) { .scale button, .dbox { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .scale button, .bub, .bub-box { transition: none; } }
 </style>
 
 </head><body>
@@ -189,7 +194,7 @@ footer { font-size: .78rem; color: var(--muted); }
 </div>
 <script>
 // The indicators come from assets/indicators.json, or the edited copy the app keeps (see "Indicators" panel).
-// kind "scale" = a 0–5 dial; kind "number" = a drum with one decimal (weight). "hidden" = removed.
+// kind "scale" = a 0–5 dial; kind "number" = a ruler with one decimal (weight). "hidden" = removed.
 let INDICATORS = [];
 let METRICS = [];   // the visible ones, in order
 // Candy: one fixed colour per step, worst → best (no blending, so no muddy in-betweens)
@@ -225,7 +230,7 @@ const $ = id => document.getElementById(id);
 const dials = $("dials");
 function buildDials() {
   dials.innerHTML = "";
-  drums.clear();
+  rulers.clear();
   for (const m of METRICS) {
     const el = document.createElement("div");
     el.className = "dial";
@@ -236,48 +241,52 @@ function buildDials() {
         <div class="scale" id="s-${m.key}" role="group" aria-label="${esc(m.name)}, 0 to 5">${SCALE.map(n => `<button id="b-${m.key}-${n}" data-k="${m.key}" data-n="${n}" aria-pressed="false" style="--b:${colour(goodness(m, n))}"><span>${n}</span>${word(n)}</button>`).join("")}</div>`;
     } else {
       el.innerHTML = `<div class="dial-head"><span class="dial-name">${esc(m.name)}</span><span class="dial-val" id="v-${m.key}"></span></div>
-        <div class="drum" id="dr-${m.key}" role="slider" tabindex="0" aria-label="${esc(m.name)}${m.unit ? " in " + esc(m.unit) : ""}"></div>`;
+        <div class="rul" id="ru-${m.key}" role="slider" tabindex="0" aria-label="${esc(m.name)}${m.unit ? " in " + esc(m.unit) : ""}"></div>`;
     }
     dials.appendChild(el);
-    if (!isScale(m)) setupDrum(m);
+    if (!isScale(m)) setupRuler(m);
   }
 }
 
-// ---- number dials (weight): a small drum in tenths. Drag up or down; the green box is the value.
-const ROW_PX = 16;             // finger movement per 0.1
-const drums = new Map();       // key -> { el, t, set, drag }
+// ---- number dials (weight): a ruler in tenths. Drag sideways; the value rides in the green bubble over the needle.
+const PX = 12;                 // pixels per 0.1
+const rulers = new Map();      // key -> { el, t, set, drag }
 function lastValue(key, before) {
   const ds = Object.keys(entries).filter(d => d < before && has(entries[d]?.[key])).sort();
   return ds.length ? entries[ds[ds.length - 1]][key] : null;
 }
-function drawDrum(m, t, set) {
-  const d = drums.get(m.key); if (!d) return;
-  d.t = t; d.set = set;
-  d.el.setAttribute("aria-valuenow", (t / 10).toFixed(1));
-  d.el.innerHTML = [-2, -1, 0, 1, 2].map(k => {
-    const v = ((t - k) / 10).toFixed(1);
-    if (k === 0) return `<div class="drow c"><div class="dbox${set ? " set" : ""}">${v}<span>${esc(m.unit || "")}</span></div></div>`;
-    const a = Math.abs(k);
-    return `<div class="drow" style="opacity:${[1, .55, .22][a]};transform:rotateX(${k * 32}deg) scale(${1 - a * .08})">${v}</div>`;
-  }).join("");
+function drawRuler(m, t, set) {
+  const r = rulers.get(m.key); if (!r) return;
+  r.t = t; r.set = set;
+  const c = r.el.clientWidth / 2 || 160, span = Math.ceil(c / PX) + 2;
+  let html = "";
+  for (let v = t - span; v <= t + span; v++) {
+    if (v < 0) continue;
+    const x = c + (v - t) * PX, major = v % 10 === 0, half = v % 5 === 0;
+    html += `<div class="tk" style="left:${x - (major ? 1.5 : 1)}px;width:${major ? 3 : 2}px;height:${major ? 30 : half ? 22 : 14}px;background:${major ? "var(--ink)" : "#9aa6ae"}"></div>`;
+    if (major) html += `<div class="tl" style="left:${x}px">${v / 10}</div>`;
+  }
+  html += `<div class="needle"></div><div class="bub${set ? " set" : ""}"><div class="bub-box">${(t / 10).toFixed(1)}<span>${esc(m.unit || "")}</span></div><i></i></div>`;
+  r.el.innerHTML = html;
+  r.el.setAttribute("aria-valuenow", (t / 10).toFixed(1));
 }
-function setupDrum(m) {
-  const el = $(`dr-${m.key}`);
-  const d = { el, t: 0, set: false, drag: null };
-  drums.set(m.key, d);
-  el.addEventListener("pointerdown", e => { d.drag = { y: e.clientY, t: d.t, moved: false }; el.setPointerCapture?.(e.pointerId); });
+function setupRuler(m) {
+  const el = $(`ru-${m.key}`);
+  const r = { el, t: 0, set: false, drag: null };
+  rulers.set(m.key, r);
+  el.addEventListener("pointerdown", e => { r.drag = { x: e.clientX, t: r.t, moved: false }; el.setPointerCapture?.(e.pointerId); });
   el.addEventListener("pointermove", e => {
-    if (!d.drag) return;
-    const n = Math.max(0, d.drag.t + Math.round((e.clientY - d.drag.y) / ROW_PX));
-    if (n !== d.t) { d.drag.moved = true; drawDrum(m, n, true); if (navigator.vibrate) navigator.vibrate(4); }
+    if (!r.drag) return;
+    const n = Math.max(0, r.drag.t + Math.round((r.drag.x - e.clientX) / PX));
+    if (n !== r.t) { r.drag.moved = true; drawRuler(m, n, true); if (navigator.vibrate) navigator.vibrate(4); }
   });
-  const end = () => { if (d.drag?.moved) setNumber(m.key, d.t / 10); d.drag = null; };
+  const end = () => { if (r.drag?.moved) setNumber(m.key, r.t / 10); r.drag = null; };
   el.addEventListener("pointerup", end);
   el.addEventListener("pointercancel", end);
   el.addEventListener("keydown", e => {
-    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
     e.preventDefault();
-    setNumber(m.key, (d.t + (e.key === "ArrowUp" ? 1 : -1)) / 10);
+    setNumber(m.key, (r.t + (e.key === "ArrowRight" ? 1 : -1)) / 10);
   });
 }
 function setNumber(key, v) {
@@ -320,8 +329,8 @@ function renderDay() {
       $(`v-${m.key}`).textContent = v == null ? (prev != null ? `Last: ${prev.toFixed(1)}` : "Drag to set")
         : e[`${m.key}_carried`] ? "Carried forward"
         : diff == null ? "" : diff === 0 ? "Same as last" : `${diff > 0 ? "+" : "−"}${Math.abs(diff).toFixed(1)} from last`;
-      const dr = drums.get(m.key);
-      if (dr && !dr.drag) drawDrum(m, Math.round(shown * 10), v != null);
+      const ru = rulers.get(m.key);
+      if (ru && !ru.drag) drawRuler(m, Math.round(shown * 10), v != null);
     }
   }
   if (document.activeElement !== $("note")) $("note").value = e.note || "";
