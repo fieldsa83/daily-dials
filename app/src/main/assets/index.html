@@ -357,13 +357,18 @@ function setupRuler(m) {
   const el = $(`ru-${m.key}`);
   const r = { el, t: 0, set: false, drag: null };
   rulers.set(m.key, r);
-  el.addEventListener("pointerdown", e => { r.drag = { x: e.clientX, t: r.t, moved: false }; el.setPointerCapture?.(e.pointerId); });
+  el.addEventListener("pointerdown", e => { r.drag = { x: e.clientX, t: r.t, moved: false, onBubble: !!e.target.closest(".bub") }; el.setPointerCapture?.(e.pointerId); });
   el.addEventListener("pointermove", e => {
     if (!r.drag) return;
     const n = Math.max(0, r.drag.t + Math.round((r.drag.x - e.clientX) / PX));
     if (n !== r.t) { r.drag.moved = true; drawRuler(m, n, true); if (navigator.vibrate) navigator.vibrate(4); }
   });
-  const end = () => { if (r.drag?.moved) setNumber(m.key, r.t / 10); r.drag = null; };
+  // a drag saves the new value; a tap on the pale bubble confirms the shown weight as today's (same as last time)
+  const end = () => {
+    const save = r.drag?.moved || (r.drag?.onBubble && !r.set);
+    r.drag = null;                       // finish the gesture first, so the redraw shows the saved state
+    if (save) setNumber(m.key, r.t / 10);
+  };
   el.addEventListener("pointerup", end);
   el.addEventListener("pointercancel", end);
   el.addEventListener("keydown", e => {
@@ -410,7 +415,7 @@ function renderDay() {
       const shown = v ?? lastValue(m.key, current) ?? m.start ?? 0;
       const prev = lastValue(m.key, current);
       const diff = v != null && prev != null ? Math.round((v - prev) * 10) / 10 : null;
-      $(`v-${m.key}`).textContent = v == null ? (prev != null ? `Last: ${prev.toFixed(1)}` : "Drag to set")
+      $(`v-${m.key}`).textContent = v == null ? (prev != null ? `Last: ${prev.toFixed(1)} · tap to confirm` : "Drag to set")
         : Number(e[`${m.key}_carried`]) === 1 ? "Carried forward"
         : diff == null ? "" : diff === 0 ? "Same as last" : `${diff > 0 ? "+" : "−"}${Math.abs(diff).toFixed(1)} from last`;
       const ru = rulers.get(m.key);
