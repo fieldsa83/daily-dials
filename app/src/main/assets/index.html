@@ -72,8 +72,10 @@ h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; }
 /* trend card: page 0 is the two-week grid, then one bar chart per dial; swipe or use the arrows */
 .trend { padding: 16px 0 14px; position: relative; }
-.tt { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 16px 12px; min-height: 30px; }
-.tt .t1 { font: 500 .98rem var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tt { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 16px 10px; min-height: 30px; }
+/* every card title the same: "All trends", "Mood trend", "Weight trend", and the dial names */
+.tt .t1, .chart-panel > h2, .dial-name { font: 500 1.1rem var(--display); }
+.tt .t1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tt .t1 em { font-style: normal; color: var(--muted); }
 .tt .t1 .sep { color: var(--muted); margin: 0 6px; }
 .tt .ctl { display: flex; flex: none; }
@@ -218,7 +220,7 @@ body.on-settings header { display: none; }
 
   <div class="tab" id="tab-checkin" role="tabpanel" aria-labelledby="tb-checkin">
   <section class="panel trend" id="trend" aria-label="Trend">
-    <div class="tt"><span class="t1"><em>Trend</em><span class="sep">·</span><b id="trendName">All indicators</b></span>
+    <div class="tt"><span class="t1" id="trendName">All trends</span>
       <div class="ctl"><button id="tPrev" aria-label="Previous chart">‹</button><button id="tNext" aria-label="Next chart">›</button></div></div>
     <div class="tpages" id="tPages"></div>
   </section>
@@ -487,7 +489,7 @@ function renderHistory() {
   });
   const pg = $("tPages");
   pg.innerHTML = page0 + charts.join("");
-  pg._names = ["All indicators", ...scales.map(m => m.name)];
+  pg._names = ["All trends", ...scales.map(m => `${m.name} trend`)];
   trendPage = Math.min(trendPage, pg._names.length - 1);
   pg.style.scrollBehavior = "auto"; pg.scrollLeft = trendPage * pg.clientWidth; pg.style.scrollBehavior = "";
   trendSync(true);
@@ -589,7 +591,7 @@ const monthStart = t => dayNum(dayStr(t).slice(0, 8) + "01");
 function buildChart(m) {
   const el = document.createElement("section");
   el.className = "panel chart-panel"; el.id = `ch-${m.key}`;
-  el.innerHTML = `<h2 style="margin:0">${esc(m.name)} over time</h2>
+  el.innerHTML = `<h2 style="margin:0">${esc(m.name)} trend</h2>
     <div class="stats" id="st-${m.key}"></div>
     <div class="chip-row"><div class="segs" data-ck="range">${Object.keys(RANGES).map(r => `<button class="chip" data-v="${r}">${r}</button>`).join("")}</div>
       <div class="segs" data-ck="view" role="group" aria-label="Line"><button class="chip" data-v="M" aria-label="Monthly">M</button><button class="chip" data-v="W" aria-label="Weekly">W</button><button class="chip" data-v="D" aria-label="Daily">D</button></div></div>
