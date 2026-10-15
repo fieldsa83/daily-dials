@@ -139,16 +139,17 @@ body.on-settings header { display: none; }
 .stats div { display: flex; flex-direction: column; }
 .stats span { font-size: .72rem; color: var(--muted); }
 .stats b { font: 700 1.15rem var(--display); font-variant-numeric: tabular-nums; }
-.chips { display: flex; gap: .3rem; flex-wrap: wrap; }
-.chip-row { display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
-.chip { min-height: 34px; padding: 0 .7rem; border-radius: 17px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: 700 .8rem var(--body); cursor: pointer; }
-.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+/* range and smoothing as two compact segmented controls on one line */
+.chip-row { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.segs { display: flex; background: var(--empty); border-radius: 10px; padding: 3px; }
+.chip { min-height: 32px; min-width: 2.3rem; padding: 0 .5rem; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: 700 .75rem var(--body); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(60, 40, 30, .15); }
 .chart { position: relative; touch-action: pan-y; }
 .chart svg { display: block; width: 100%; overflow: visible; }
 .chart .ax { font: 400 10.5px var(--body); fill: var(--muted); font-variant-numeric: tabular-nums; }
 .readout-tip { position: absolute; top: 0; transform: translateX(-50%); padding: .2rem .5rem; border-radius: 8px; background: var(--ink); color: var(--surface); font: 700 .75rem var(--body); white-space: nowrap; pointer-events: none; }
-.target-row { display: flex; align-items: center; gap: .4rem; font-size: .85rem; color: var(--muted); }
-.target-row input { width: 4.5rem; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: .3rem .5rem; }
+.target-in { display: inline-flex; align-items: center; gap: .3rem; font: 700 .75rem var(--body); color: var(--muted); padding: 0 .3rem 0 .7rem; border: 1px solid var(--line); border-radius: 14px; }
+.target-in input { width: 3.6rem; font: 700 .8rem var(--body); color: var(--ink); background: var(--bg); border: 0; border-radius: 8px; padding: .3rem .4rem; }
 /* indicator editor */
 .ind { display: flex; flex-direction: column; gap: .4rem; padding: .6rem 0; border-bottom: 1px solid var(--line); }
 .ind:last-child { border-bottom: 0; }
@@ -474,22 +475,15 @@ function buildChart(m) {
   el.className = "panel chart-panel"; el.id = `ch-${m.key}`;
   el.innerHTML = `<h2 style="margin:0">${esc(m.name)} over time</h2>
     <div class="stats" id="st-${m.key}"></div>
-    <div class="chip-row"><div class="chips" data-ck="range">${Object.keys(RANGES).map(r => `<button class="chip" data-v="${r}">${r}</button>`).join("")}</div>
-      <div class="chips" data-ck="view"><button class="chip" data-v="M">Monthly</button><button class="chip" data-v="W">Weekly</button><button class="chip" data-v="D">Daily</button></div></div>
-    <div class="chart" id="cv-${m.key}"></div>
-    <label class="target-row">Target <input type="number" step="0.1" inputmode="decimal" id="tg-${m.key}" value="${m.target ?? ""}" placeholder="none"> ${esc(m.unit || "")}</label>`;
+    <div class="chip-row"><div class="segs" data-ck="range">${Object.keys(RANGES).map(r => `<button class="chip" data-v="${r}">${r}</button>`).join("")}</div>
+      <div class="segs" data-ck="view" role="group" aria-label="Line"><button class="chip" data-v="M" aria-label="Monthly">M</button><button class="chip" data-v="W" aria-label="Weekly">W</button><button class="chip" data-v="D" aria-label="Daily">D</button></div></div>
+    <div class="chart" id="cv-${m.key}"></div>`;
   $("charts").appendChild(el);
   el.addEventListener("click", e => {
     const b = e.target.closest(".chip"); if (!b) return;
     CH[b.parentElement.dataset.ck] = b.dataset.v;
     try { localStorage.setItem("dailydials.chart", JSON.stringify(CH)); } catch {}
     renderCharts();
-  });
-  $(`tg-${m.key}`).addEventListener("change", e => {
-    const v = parseFloat(e.target.value);
-    const ind = INDICATORS.find(x => x.key === m.key); if (!ind) return;
-    if (isNaN(v)) delete ind.target; else ind.target = Math.round(v * 10) / 10;
-    applyIndicators(true);
   });
   const cv = $(`cv-${m.key}`);
   const tip = e => {
@@ -513,7 +507,7 @@ function renderCharts() {
 }
 function renderChart(m) {
   const cv = $(`cv-${m.key}`); if (!cv) return;
-  for (const g of document.querySelectorAll(`#ch-${m.key} .chips`)) for (const b of g.children) b.setAttribute("aria-pressed", String(b.dataset.v === CH[g.dataset.ck]));
+  for (const g of document.querySelectorAll(`#ch-${m.key} .segs`)) for (const b of g.children) b.setAttribute("aria-pressed", String(b.dataset.v === CH[g.dataset.ck]));
   const pts = readings(m.key), today = dayNum(todayIso());
   const st = $(`st-${m.key}`);
   if (!pts.length) { st.innerHTML = ""; cv.innerHTML = `<p class="empty">Your ${esc(m.name.toLowerCase())} readings will be charted here. You can paste past readings under Settings &amp; sync → Import.</p>`; cv._state = null; return; }
@@ -733,7 +727,7 @@ function renderEditor() {
       <button data-act="up" data-i="${i}" aria-label="Move up">↑</button><button data-act="down" data-i="${i}" aria-label="Move down">↓</button><button class="rm" data-act="rm" data-i="${i}" aria-label="Remove ${esc(m.name)}">✕</button></div>
     <div class="chips">${isScale(m)
       ? `<span>0–5 dial</span><button data-act="high" data-i="${i}">${m.high ? "High is good" : "Low is good"}</button><button data-act="notif" data-i="${i}" aria-pressed="${!!m.notif}">${m.notif ? "In notification" : "App only"}</button>`
-      : `<span>Number · 1 decimal${m.unit ? " · " + esc(m.unit) : ""}</span><button data-act="carry" data-i="${i}" aria-pressed="${!!m.carry}">${m.carry ? "Carry forward if blank" : "Leave blank days empty"}</button>`}</div>
+      : `<span>Number · 1 decimal${m.unit ? " · " + esc(m.unit) : ""}</span><label class="target-in">Target <input type="number" step="0.1" inputmode="decimal" data-target="${i}" value="${m.target ?? ""}" placeholder="none" aria-label="Target for ${esc(m.name)}"></label><button data-act="carry" data-i="${i}" aria-pressed="${!!m.carry}">${m.carry ? "Carry forward if blank" : "Leave blank days empty"}</button>`}</div>
   </div>`).join("");
   const gone = INDICATORS.map((m, i) => ({ m, i })).filter(x => x.m.hidden);
   $("indRemoved").innerHTML = gone.length ? `<p class="hint">Removed: ${gone.map(({ m, i }) => `${esc(m.name)} <button class="btn ghost" data-act="restore" data-i="${i}" style="padding:.3rem .6rem">Restore</button>`).join(" ")}</p>` : "";
@@ -761,6 +755,13 @@ function editorClick(e) {
 $("indList").addEventListener("click", editorClick);
 $("indRemoved").addEventListener("click", editorClick);
 $("indList").addEventListener("change", e => {
+  const tg = e.target.closest("input[data-target]");
+  if (tg) {
+    const m = INDICATORS[Number(tg.dataset.target)]; if (!m) return;
+    const v = parseFloat(tg.value);
+    if (isNaN(v)) delete m.target; else m.target = Math.round(v * 10) / 10;
+    applyIndicators(true); return;
+  }
   const inp = e.target.closest("input[data-i]"); if (!inp) return;
   const m = INDICATORS[Number(inp.dataset.i)], name = inp.value.trim();
   if (!m || !name) { renderEditor(); return; }
