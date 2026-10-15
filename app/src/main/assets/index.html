@@ -102,6 +102,7 @@ h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 
 .tchart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .tchart svg text { font: .62rem var(--body); fill: var(--muted); }
 .tbar { cursor: pointer; }
+.tr-chips { justify-content: flex-start; margin-top: .4rem; }
 .tbub { position: absolute; z-index: 5; background: var(--ink); color: var(--surface); border-radius: 9px; padding: 5px 9px; font-size: .76rem; line-height: 1.3; white-space: nowrap; pointer-events: none; transform: translate(-50%, -100%); }
 .tbub::after { content: ""; position: absolute; left: var(--ax, 50%); bottom: -5px; margin-left: -5px; border: 5px solid transparent; border-bottom: 0; border-top-color: var(--ink); }
 .tbub b { font-size: .88rem; }
@@ -490,9 +491,11 @@ function renderHistory() {
   const page0 = `<div><div class="grid-wrap"><div class="grid">${grid}</div></div>
     <div class="gaxis"><span></span><span style="grid-column:span 7">${wk(days[0], days[6])}</span><span>avg</span><span></span><span style="grid-column:span 7">${wk(days[7], days[13])}</span><span>avg</span></div>
     ${any ? "" : `<p class="empty">Your check-ins will fill this grid. Green is a good day for that item, coral a bad one.</p>`}</div>`;
+  const span = Array.from({ length: TR_DAYS[trendRange] }, (_, i) => shift(t, i - TR_DAYS[trendRange] + 1));
+  const chips = `<div class="chip-row tr-chips"><div class="segs">${Object.keys(TR_DAYS).map(r => `<button class="chip" data-tr="${r}" aria-pressed="${r === trendRange}">${r}</button>`).join("")}</div></div>`;
   const charts = scales.map(m => {
-    const a = mean(m.key, days);
-    return `<div class="tchart"><div class="pt"><span>${m.high ? "0 bad · 5 good" : "0 none · 5 max"}</span><span><b>${a == null ? "–" : a.toFixed(1)}</b> avg</span></div>${trendBars(m, days)}</div>`;
+    const a = mean(m.key, span);
+    return `<div class="tchart"><div class="pt"><span>${m.high ? "0 bad · 5 good" : "0 none · 5 max"}</span><span><b>${a == null ? "–" : a.toFixed(1)}</b> avg</span></div>${trendBars(m, span)}${chips}</div>`;
   });
   const pg = $("tPages");
   pg.innerHTML = page0 + charts.join("");
@@ -501,21 +504,40 @@ function renderHistory() {
   pg.style.scrollBehavior = "auto"; pg.scrollLeft = trendPage * pg.clientWidth; pg.style.scrollBehavior = "";
   trendSync(true);
 }
+// how far back the per-dial charts look; 2W and 1M show days, 3M weeks, 1Y months (averages)
+const TR_DAYS = { "2W": 14, "1M": 30, "3M": 91, "1Y": 365 };
+let trendRange = (() => { try { const r = localStorage.getItem("dailydials.trendRange"); return TR_DAYS[r] ? r : "2W"; } catch { return "2W"; } })();
+function trendBuckets(days) {
+  if (trendRange === "2W" || trendRange === "1M") return days.map(d => ({ from: d, to: d, label: shortDay(d) }));
+  if (trendRange === "3M") {
+    const out = []; for (let i = 0; i < days.length; i += 7) { const g = days.slice(i, i + 7); out.push({ from: g[0], to: g[g.length - 1], label: shortDay(g[0]) }); } return out;
+  }
+  const out = []; let cur = null;
+  for (const d of days) { const k = d.slice(0, 7); if (!cur || cur.k !== k) { cur = { k, from: d, to: d, label: md(d).toLocaleDateString(undefined, { month: "short" }) }; out.push(cur); } else cur.to = d; }
+  return out;
+}
 function trendBars(m, days) {
-  const W = 340, H = 140, L = 16, B = 18, T = 6, n = days.length, bw = (W - L) / n, Y = v => T + (5 - v) / 5 * (H - T - B);
+  const W = 340, H = 140, L = 16, B = 18, T = 6, Y = v => T + (5 - v) / 5 * (H - T - B);
+  const bk = trendBuckets(days), n = bk.length, bw = (W - L) / n;
+  const val = b => { const vs = []; for (let d = b.from; d <= b.to; d = shift(d, 1)) { const v = entries[d]?.[m.key]; if (has(v)) vs.push(v); } return vs.length ? vs.reduce((x, y) => x + y, 0) / vs.length : null; };
   let g = "";
   for (let v = 0; v <= 5; v++) { g += `<line x1="${L}" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="${v ? .6 : 1}"/>`; if (v === 0 || v === 5) g += `<text x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${v}</text>`; }
-  days.forEach((d, i) => {
-    const v = entries[d]?.[m.key], x = L + i * bw + bw * .15, w = bw * .7;
-    if (!has(v)) { g += `<rect x="${x}" y="${H - B - 2}" width="${w}" height="2" rx="1" fill="var(--empty)"/>`; return; }
+  bk.forEach((b, i) => {
+    const v = val(b), x = L + i * bw + bw * .15, w = bw * .7, rx = Math.min(4, w / 3);
+    if (v == null) { g += `<rect x="${x}" y="${H - B - 2}" width="${w}" height="2" rx="1" fill="var(--empty)"/>`; return; }
     const hh = Math.max(3, H - B - Y(v));
-    g += `<rect class="tbar" data-k="${m.key}" data-d="${d}" x="${x}" y="${H - B - hh}" width="${w}" height="${hh}" rx="4" fill="${colour(goodness(m, v))}"/>`;
+    g += `<rect class="tbar" data-k="${m.key}" data-d="${b.from}" data-e="${b.to}" data-v="${v}" x="${x}" y="${H - B - hh}" width="${w}" height="${hh}" rx="${rx}" fill="${colour(goodness(m, v))}"/>`;
   });
   const vs = days.map(d => entries[d]?.[m.key]).filter(has);
-  if (vs.length) { const ya = Y(vs.reduce((a, b) => a + b, 0) / vs.length); g += `<line x1="${L}" x2="${W}" y1="${ya}" y2="${ya}" stroke="var(--ink)" stroke-width="1.2" stroke-dasharray="3 3" opacity=".6"/>`; }
-  [0, 7, n - 1].forEach(i => g += `<text x="${L + i * bw + bw / 2}" y="${H - 4}" text-anchor="${i === 0 ? "start" : i === n - 1 ? "end" : "middle"}">${shortDay(days[i])}</text>`);
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(m.name)}, last 14 days">${g}</svg>`;
+  if (vs.length) { const ya = Y(vs.reduce((a, b) => a + b, 0) / vs.length); g += `<line x1="${L}" x2="${W}" y1="${ya}" y2="${ya}" stroke="var(--ink)" stroke-width="1.2" stroke-dasharray="3 3" opacity=".6" pointer-events="none"/>`; }
+  [0, Math.floor((n - 1) / 2), n - 1].forEach(i => g += `<text x="${L + i * bw + bw / 2}" y="${H - 4}" text-anchor="${i === 0 ? "start" : i === n - 1 ? "end" : "middle"}">${bk[i].label}</text>`);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(m.name)}, ${trendRange}">${g}</svg>`;
 }
+$("tPages").addEventListener("click", e => {
+  const c = e.target.closest(".chip[data-tr]"); if (!c) return;
+  trendRange = c.dataset.tr; try { localStorage.setItem("dailydials.trendRange", trendRange); } catch {}
+  trendBubble(null); renderHistory();
+});
 // which page is showing → title and arrows
 function trendSync(force) {
   const pg = $("tPages"); if (!pg._names) return;
@@ -529,19 +551,29 @@ function trendSync(force) {
 const trendGo = i => { const pg = $("tPages"); i = Math.max(0, Math.min(pg._names.length - 1, i)); pg.scrollTo({ left: i * pg.clientWidth, behavior: "smooth" }); };
 $("tPrev").onclick = () => trendGo(trendPage - 1);
 $("tNext").onclick = () => trendGo(trendPage + 1);
-{ let tm; $("tPages").addEventListener("scroll", () => { clearTimeout(tm); tm = setTimeout(() => trendSync(false), 90); }); }
+$("tPages").addEventListener("scroll", () => trendSync(false), { passive: true });   // the title switches as soon as the next chart is half in view
 // tap a square or a bar → a small bubble with the day and value; tap again or elsewhere to close
 let tbub = null, tsel = null;
 function trendBubble(t) {
   if (tbub) tbub.remove(); if (tsel) tsel.classList.remove("sel"); tbub = tsel = null;
   if (!t) return;
-  const m = METRICS.find(x => x.key === t.dataset.k), d = t.dataset.d, v = entries[d]?.[m.key];
+  const m = METRICS.find(x => x.key === t.dataset.k), d = t.dataset.d, e2 = t.dataset.e;
+  if (e2 && e2 !== d) {   // a week or month bar: show its span and average
+    const card = $("trend"); tsel = t; t.classList.add("sel");
+    tbub = document.createElement("div"); tbub.className = "tbub";
+    const span = d.slice(0, 7) === e2.slice(0, 7) && trendRange === "1Y" ? md(d).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : `${shortDay(d)} – ${shortDay(e2)}`;
+    tbub.innerHTML = `${esc(span)}<br><b>${esc(m.name)} ${Number(t.dataset.v).toFixed(1)} avg</b>`;
+    card.append(tbub); placeBubble(t); return;
+  }
+  const v = entries[d]?.[m.key];
   const word = !has(v) ? "" : v === 0 ? (m.high ? " · Bad" : " · None") : v === 5 ? (m.high ? " · Good" : " · Max") : "";
   const card = $("trend"); tsel = t; t.classList.add("sel");
   tbub = document.createElement("div"); tbub.className = "tbub";
   tbub.innerHTML = `${esc(longDay(d))}<br><b>${esc(m.name)} ${has(v) ? v + word : "– no entry"}</b>`;
-  card.append(tbub);
-  const cr = t.getBoundingClientRect(), pr = card.getBoundingClientRect(), want = cr.left - pr.left + cr.width / 2, half = tbub.offsetWidth / 2;
+  card.append(tbub); placeBubble(t);
+}
+function placeBubble(t) {
+  const card = $("trend"), cr = t.getBoundingClientRect(), pr = card.getBoundingClientRect(), want = cr.left - pr.left + cr.width / 2, half = tbub.offsetWidth / 2;
   const x = Math.max(half + 4, Math.min(pr.width - half - 4, want));
   tbub.style.left = x + "px"; tbub.style.top = (cr.top - pr.top - 6) + "px";
   tbub.style.setProperty("--ax", (50 + (want - x) / tbub.offsetWidth * 100) + "%");
