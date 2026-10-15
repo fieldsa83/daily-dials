@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.HapticFeedbackConstants;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -108,6 +109,12 @@ public class MainActivity extends Activity {
 
     /** Methods the page calls as window.DailyDials.* */
     private class Bridge {
+        /** A light click for each notch of the weight ruler. */
+        @JavascriptInterface
+        public void tick() {
+            runOnUiThread(() -> web.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING));
+        }
+
         @JavascriptInterface
         public String getAll() {
             return store.allJson();

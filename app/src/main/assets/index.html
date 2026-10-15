@@ -74,7 +74,8 @@ h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 
 .trend { padding: 16px 0 14px; position: relative; }
 .tt { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 16px 10px; min-height: 30px; }
 /* every card title the same: "All trends", "Mood trend", "Weight trend", and the dial names */
-.tt .t1, .chart-panel > h2, .dial-name { font: 500 1.1rem var(--display); }
+.tt .t1, .chart-panel > h2 { font: 500 1.1rem var(--display); }
+.dial-name { font: 500 1rem var(--display); }   /* dial names a step below the card titles */
 .tt .t1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tt .t1 em { font-style: normal; color: var(--muted); }
 .tt .t1 .sep { color: var(--muted); margin: 0 6px; }
@@ -398,7 +399,7 @@ function setupRuler(m) {
   el.addEventListener("pointermove", e => {
     if (!r.drag) return;
     const n = Math.max(0, r.drag.t + Math.round((r.drag.x - e.clientX) / PX));
-    if (n !== r.t) { r.drag.moved = true; drawRuler(m, n, true); if (navigator.vibrate) navigator.vibrate(4); }
+    if (n !== r.t) { r.drag.moved = true; drawRuler(m, n, true); if (App?.tick) App.tick(); else if (navigator.vibrate) navigator.vibrate(4); }   // a click per notch
   });
   // a drag saves the new value; a tap on the pale bubble confirms the shown weight as today's (same as last time)
   const end = () => {
