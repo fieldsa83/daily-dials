@@ -183,7 +183,7 @@ footer { font-size: .78rem; color: var(--muted); }
         <div class="seg" id="alert" role="group" aria-label="Alert style">
           <button data-v="silent">Silent</button><button data-v="vibrate">Vibrate</button><button data-v="sound">Sound</button>
         </div>
-        <div class="row" id="pauseRow"><button class="btn ghost" data-days="3">Pause 3 days</button><button class="btn ghost" data-days="7">Pause 1 week</button><button class="btn ghost" data-days="-1">Pause until I turn it on</button><button class="btn ghost" data-days="0" id="resume">Resume</button></div>
+        <div class="row" id="pauseRow"><button class="btn ghost" data-days="3">Pause 3 days</button><button class="btn ghost" data-days="7">Pause 1 week</button><button class="btn ghost" data-days="-1">Pause until I turn it on</button><button class="btn ghost" data-days="0" id="resume" hidden>Resume</button></div>
         <p class="hint" id="nextRem"></p>
       </fieldset>
       <label class="field"><span>Google Sheet link</span><input type="url" id="sheetUrl" placeholder="https://script.google.com/macros/s/…/exec?token=…" autocomplete="off"></label>
@@ -337,7 +337,11 @@ function renderDay() {
     } else {
       const v = has(e[m.key]) ? e[m.key] : null;
       const shown = v ?? lastValue(m.key, current) ?? m.start ?? 0;
-      $(`v-${m.key}`).textContent = v == null ? "Not entered · drag to set" : (e[`${m.key}_carried`] ? "Carried forward" : `${v.toFixed(1)} ${m.unit || ""}`.trim());
+      const prev = lastValue(m.key, current);
+      const diff = v != null && prev != null ? Math.round((v - prev) * 10) / 10 : null;
+      $(`v-${m.key}`).textContent = v == null ? "Not entered · drag to set"
+        : e[`${m.key}_carried`] ? "Carried forward"
+        : diff == null ? "" : diff === 0 ? "Same as last" : `${diff > 0 ? "+" : "−"}${Math.abs(diff).toFixed(1)} from last`;
       const r = rulers.get(m.key);
       if (r && r.touched && !r.timer) r.touched = false;   // a tap without a drag
       if (r && !r.touched) { showReading(m, shown, v == null); placeRuler(m, shown, false); }
@@ -446,6 +450,7 @@ function setAlert(v) {
   alertStyle = v;
   for (const el of $("alert").children) el.setAttribute("aria-pressed", String(el.dataset.v === v));
 }
+setDays(127); setAlert("silent");   // defaults until the app's settings load
 $("days").onclick = e => { const b = e.target.closest("button"); if (b) setDays(days ^ (1 << Number(b.dataset.bit))); };
 $("alert").onclick = e => { const b = e.target.closest("button"); if (b) setAlert(b.dataset.v); };
 function showNext(next, pausedUntil) {
