@@ -299,7 +299,8 @@ function buildDials() {
     el.className = "dial";
     if (isScale(m)) {
       el.style.setProperty("--n", 6);
-      const word = n => n === 0 ? `<small>${esc(m.lo || "Low")}</small>` : n === 5 ? `<small>${esc(m.hi || "High")}</small>` : "";
+      // end labels follow "high is good": None → Good, or None → Bad for pain-type dials
+      const word = n => n === 0 ? `<small>None</small>` : n === 5 ? `<small>${m.high ? "Good" : "Bad"}</small>` : "";
       el.innerHTML = `<div class="dial-head"><span class="dial-name">${esc(m.name)}</span></div>
         <div class="scale" id="s-${m.key}" role="group" aria-label="${esc(m.name)}, 0 to 5">${SCALE.map(n => `<button id="b-${m.key}-${n}" data-k="${m.key}" data-n="${n}" aria-pressed="false" style="--b:${colour(goodness(m, n))}"><span>${n}</span>${word(n)}</button>`).join("")}</div>`;
     } else {
@@ -777,7 +778,7 @@ $("newKind").onclick = e => {
 $("addInd").onclick = () => {
   const name = $("newName").value.trim(); if (!name) { $("newName").focus(); return; }
   const m = newKind === "scale"
-    ? { key: newKey(name), name, kind: "scale", high: true, notif: true, lo: "Low", hi: "High" }
+    ? { key: newKey(name), name, kind: "scale", high: true, notif: true }
     : { key: newKey(name), name, kind: "number", notif: false, carry: false };
   INDICATORS.push(m);
   $("newName").value = "";

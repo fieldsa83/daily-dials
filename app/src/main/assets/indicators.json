@@ -1,10 +1,10 @@
 [
-  {"key": "mood", "name": "Mood", "kind": "scale", "high": true, "notif": true, "lo": "Awful", "hi": "Great", "words": ["Awful", "Low", "Meh", "Okay", "Good", "Great"]},
-  {"key": "pain", "name": "Back pain", "short": "Back", "kind": "scale", "high": false, "notif": true, "lo": "None", "hi": "Severe", "words": ["None", "Very mild", "Mild", "Moderate", "Strong", "Severe"]},
-  {"key": "activity", "name": "Activity", "kind": "scale", "high": true, "notif": true, "lo": "None", "hi": "Very active", "words": ["None", "Resting", "Light", "Moderate", "Active", "Very active"]},
-  {"key": "anxiety", "name": "Anxiety", "kind": "scale", "high": false, "notif": true, "lo": "None", "hi": "Very anxious", "words": ["None", "Slight", "Mild", "Moderate", "High", "Very anxious"]},
-  {"key": "sleep", "name": "Sleep", "kind": "scale", "high": true, "notif": true, "lo": "None", "hi": "Great", "words": ["None", "Poor", "Restless", "Okay", "Good", "Great"]},
-  {"key": "otherpain", "name": "Other pain", "kind": "scale", "high": false, "notif": true, "lo": "None", "hi": "Severe", "words": ["None", "Very mild", "Mild", "Moderate", "Strong", "Severe"]},
-  {"key": "driving", "name": "Driving", "kind": "scale", "high": false, "notif": true, "lo": "Easy", "hi": "Very hard", "words": ["Easy", "A little hard", "Somewhat hard", "Moderate", "Hard", "Very hard"]},
+  {"key": "mood", "name": "Mood", "kind": "scale", "high": true, "notif": true},
+  {"key": "pain", "name": "Back pain", "short": "Back", "kind": "scale", "high": false, "notif": true},
+  {"key": "activity", "name": "Activity", "kind": "scale", "high": true, "notif": true},
+  {"key": "anxiety", "name": "Anxiety", "kind": "scale", "high": false, "notif": true},
+  {"key": "sleep", "name": "Sleep", "kind": "scale", "high": true, "notif": true},
+  {"key": "otherpain", "name": "Other pain", "kind": "scale", "high": false, "notif": true},
+  {"key": "driving", "name": "Driving", "kind": "scale", "high": false, "notif": true},
   {"key": "weight", "name": "Weight", "kind": "number", "unit": "lb", "start": 136, "target": 135, "notif": false, "carry": true}
 ]

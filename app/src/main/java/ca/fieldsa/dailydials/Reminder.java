@@ -124,7 +124,7 @@ final class Reminder {
         String title = nudge ? "Still time for today's check-in"
                 : opening && "mood".equals(key) ? "How's your mood today?"
                 : name + "?";
-        String scale = "0 " + m.optString("lo", "low").toLowerCase(Locale.ROOT) + " · 5 " + m.optString("hi", "high").toLowerCase(Locale.ROOT);
+        String scale = "0 none · 5 " + (highIsGood ? "good" : "bad");
         big.setTextViewText(R.id.title, title);
         big.setTextViewText(R.id.scale, scale);
 
