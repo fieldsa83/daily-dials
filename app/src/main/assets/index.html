@@ -175,9 +175,11 @@ body.on-settings header { display: none; }
 .stats b { font: 700 1.15rem var(--display); font-variant-numeric: tabular-nums; }
 /* range and smoothing as two compact segmented controls on one line */
 .chip-row { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
-.segs { display: flex; background: var(--empty); border-radius: 10px; padding: 3px; }
-.chip { min-height: 32px; min-width: 2.3rem; padding: 0 .5rem; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: 700 .75rem var(--body); cursor: pointer; }
-.chip[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(60, 40, 30, .15); }
+/* under the chart: small rounded chips, the picked one softly tinted */
+.chip-row { margin-top: .6rem; }
+.segs { display: flex; gap: 4px; }
+.chip { min-height: 28px; min-width: 2.1rem; padding: 0 .5rem; border: 0; border-radius: 99px; background: transparent; color: var(--muted); font: 700 .72rem var(--body); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--empty); color: var(--ink); }
 .chart { position: relative; touch-action: pan-y; }
 .chart-panel { padding-left: .5rem; padding-right: .5rem; }
 .chart-panel > h2, .chart-panel .stats, .chart-panel .chip-row { padding: 0 .5rem; }
@@ -593,9 +595,9 @@ function buildChart(m) {
   el.className = "panel chart-panel"; el.id = `ch-${m.key}`;
   el.innerHTML = `<h2 style="margin:0">${esc(m.name)} trend</h2>
     <div class="stats" id="st-${m.key}"></div>
+    <div class="chart" id="cv-${m.key}"></div>
     <div class="chip-row"><div class="segs" data-ck="range">${Object.keys(RANGES).map(r => `<button class="chip" data-v="${r}">${r}</button>`).join("")}</div>
-      <div class="segs" data-ck="view" role="group" aria-label="Line"><button class="chip" data-v="M" aria-label="Monthly">M</button><button class="chip" data-v="W" aria-label="Weekly">W</button><button class="chip" data-v="D" aria-label="Daily">D</button></div></div>
-    <div class="chart" id="cv-${m.key}"></div>`;
+      <div class="segs" data-ck="view" role="group" aria-label="Line"><button class="chip" data-v="M" aria-label="Monthly">M</button><button class="chip" data-v="W" aria-label="Weekly">W</button><button class="chip" data-v="D" aria-label="Daily">D</button></div></div>`;
   $("charts").appendChild(el);
   el.addEventListener("click", e => {
     const b = e.target.closest(".chip"); if (!b) return;
