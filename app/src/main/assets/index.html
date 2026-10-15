@@ -511,17 +511,27 @@ function buildChart(m) {
     renderCharts();
   });
   const cv = $(`cv-${m.key}`);
+  // tap a dot to see that reading's date and value; elsewhere, the line's value at that point
   const tip = e => {
     const st = cv._state; if (!st) return;
-    const r = cv.getBoundingClientRect(), x = e.clientX - r.left;
-    let best = null;
-    for (const p of st.line) { const px = st.X(p[0]); if (!best || Math.abs(px - x) < Math.abs(best.px - x)) best = { p, px }; }
+    const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    let dot = null;
+    for (const p of st.dots) { const d = Math.hypot(st.X(p[0]) - x, st.Y(p[1]) - y); if (d < 26 && (!dot || d < dot.d)) dot = { p, d }; }
+    let best = null, lbl;
+    if (dot) {
+      best = { p: dot.p, px: st.X(dot.p[0]) };
+      lbl = fmtDay(dot.p[0], { month: "short", day: "numeric", year: "numeric" });
+    } else if (st.line.length) {
+      for (const p of st.line) { const px = st.X(p[0]); if (!best || Math.abs(px - x) < Math.abs(best.px - x)) best = { p, px }; }
+      lbl = st.view === "M" ? fmtDay(best.p[0], { month: "short", year: "numeric" }) : "Week of " + fmtDay(best.p[0], { month: "short", day: "numeric" });
+    }
     if (!best) return;
     let t = cv.querySelector(".readout-tip"); if (!t) { t = document.createElement("div"); t.className = "readout-tip"; cv.appendChild(t); }
-    const lbl = st.view === "M" ? fmtDay(best.p[0], { month: "short", year: "numeric" }) : st.view === "W" ? "Week of " + fmtDay(best.p[0], { month: "short", day: "numeric" }) : fmtDay(best.p[0], { month: "short", day: "numeric", year: "numeric" });
     t.textContent = `${lbl} · ${best.p[1].toFixed(1)}`;
-    t.style.left = `${Math.min(Math.max(best.px, 60), r.width - 60)}px`;
-    let g = cv.querySelector(".tipline"); if (g) g.setAttribute("x1", best.px), g.setAttribute("x2", best.px), g.style.display = "";
+    t.style.left = `${Math.min(Math.max(best.px, 70), r.width - 70)}px`;
+    const g = cv.querySelector(".tipline"); if (g) { g.setAttribute("x1", best.px); g.setAttribute("x2", best.px); g.style.display = ""; }
+    const ring = cv.querySelector(".pick");
+    if (ring) { if (dot) { ring.setAttribute("cx", best.px); ring.setAttribute("cy", st.Y(dot.p[1])); ring.style.display = ""; } else ring.style.display = "none"; }
   };
   cv.addEventListener("pointerdown", tip);
   cv.addEventListener("pointermove", e => { if (e.buttons || e.pointerType === "mouse") tip(e); });
@@ -579,12 +589,12 @@ function renderChart(m) {
   svg += `<g clip-path="url(#cp-${m.key})">`;
   const r = visD.length > 400 ? 1.6 : visD.length > 120 ? 2.2 : 3;
   for (const [t, v] of visD) svg += `<circle cx="${X(t).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${r}" fill="#cfdcb4" stroke="#71a993" stroke-width=".8" opacity=".8"/>`;
-  if (visL.length) svg += `<polyline fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${visL.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ")}"/>`;
+  if (visL.length && CH.view !== "D") svg += `<polyline fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${visL.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ")}"/>`;
   // target: a dashed line across, with the word "Target" just below it at the far left
   if (m.target != null) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(m.target)}" y2="${Y(m.target)}" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="4 4"/><text class="ax" x="${L + 2}" y="${Y(m.target) + 13}" text-anchor="start" style="fill:var(--warn)">Target</text>`;
-  svg += `<line class="tipline" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--ink)" stroke-width="1" opacity=".35" style="display:none"/></g></svg>`;
+  svg += `<circle class="pick" r="6" fill="none" stroke="var(--ink)" stroke-width="2" style="display:none"/><line class="tipline" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--ink)" stroke-width="1" opacity=".35" style="display:none"/></g></svg>`;
   cv.innerHTML = svg;
-  cv._state = { line: visL.filter(p => p[0] >= start), X, view: CH.view };
+  cv._state = { line: CH.view === "D" ? [] : visL.filter(p => p[0] >= start), dots: visD, X, Y, view: CH.view };
 }
 window.addEventListener("resize", () => renderCharts());
 
