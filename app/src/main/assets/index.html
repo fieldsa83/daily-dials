@@ -36,39 +36,42 @@
 * { box-sizing: border-box; }
 body { margin: 0; -webkit-tap-highlight-color: transparent; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; }
 .wrap { max-width: 34rem; margin: 0 auto; padding: 1.25rem 16px 3rem; display: flex; flex-direction: column; gap: 1.5rem; }
-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
 h1 { font-family: var(--display); font-weight: 700; font-size: 1.7rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
 .datebar { display: flex; align-items: center; gap: .35rem; }
 .datebar button { background: var(--surface); border: 1px solid var(--line); color: var(--ink); width: 2.25rem; height: 2.25rem; border-radius: 50%; font-size: 1.1rem; cursor: pointer; }
 .datebar button:disabled { opacity: .35; cursor: default; }
-.datebar .day { font-weight: 700; min-width: 7.5rem; text-align: center; font-variant-numeric: tabular-nums; }
 .dials { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: .25rem 1rem; }
-.dial { padding: 1rem 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: .55rem; }
-.dial:last-child { border-bottom: 0; }
+.dial { padding: .85rem 0; display: flex; flex-direction: column; gap: .5rem; }
 .dial-head { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
 .dial-name { font-family: var(--display); font-weight: 500; font-size: 1.15rem; }
 .dial-val { font-size: .85rem; color: var(--muted); }
-.scale { display: grid; grid-template-columns: repeat(var(--n, 5), 1fr); gap: .6rem; padding: 6px; margin: -6px; }
+.scale { display: grid; grid-template-columns: repeat(var(--n, 5), 1fr); gap: .5rem; }
 .scale button {
   font: 700 1.15rem var(--body); font-variant-numeric: tabular-nums; height: 3rem; border-radius: 10px;
-  border: 2px solid var(--b); background: color-mix(in srgb, var(--b) 28%, var(--bg)); color: var(--ink); cursor: pointer; transition: transform .08s, box-shadow .08s;
+  border: 2px solid transparent; background: color-mix(in srgb, var(--b) 22%, var(--surface)); color: var(--ink); cursor: pointer; transition: transform .08s, background .12s;
 }
 .scale button:active { transform: scale(.95); }
-.scale button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--ink); font-size: 1.3rem; }
+.scale button[aria-pressed="true"] { border-color: var(--b); background: color-mix(in srgb, var(--b) 50%, var(--surface)); }
 .scale button:focus-visible, .datebar button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.anchors { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.anchors { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); }
 .note { display: flex; flex-direction: column; gap: .4rem; }
 .note label { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-textarea { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: .6rem .75rem; min-height: 3.2rem; resize: vertical; }
+textarea { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: .6rem .75rem; min-height: 2.8rem; height: 2.8rem; resize: none; transition: height .15s; }
+textarea:focus, textarea.has-text { height: 6rem; }
 .status { font-size: .85rem; color: var(--muted); min-height: 1.2em; }
 h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0 0 .75rem; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; }
 .grid-wrap { overflow-x: auto; }
-.grid { display: grid; grid-template-columns: 4.6rem repeat(28, minmax(.6rem, 1fr)); gap: 3px; align-items: center; min-width: 20rem; }
+.grid { display: grid; grid-template-columns: 5.2rem repeat(14, minmax(0, 1fr)) 2.4rem; gap: 4px; align-items: center; }
+.grid .av { font-family: var(--display); font-weight: 700; font-size: .95rem; text-align: right; font-variant-numeric: tabular-nums; }
+.grid .hd { font-size: .68rem; color: var(--muted); text-align: right; }
+.wline { display: flex; justify-content: space-between; align-items: baseline; margin-top: .9rem; padding-top: .8rem; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted); }
+.wline b { white-space: nowrap; font-family: var(--display); font-size: 1.1rem; color: var(--ink); font-variant-numeric: tabular-nums; }
 .grid .lbl { font-size: .78rem; color: var(--muted); }
-.cell { aspect-ratio: 1; border-radius: 2px; background: var(--empty); max-width: 100%; }
-.ticks { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin: .35rem 0 0 4.9rem; font-variant-numeric: tabular-nums; }
-.avgs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: 1rem; }
+.cell { aspect-ratio: 1; border-radius: 3px; background: var(--empty); max-width: 100%; }
+.ticks { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin: .4rem 2.65rem 0 5.45rem; font-variant-numeric: tabular-nums; }
+.avgs { display: block; }
 .avg { border-top: 3px solid var(--c); padding-top: .4rem; }
 .avg b { font-family: var(--display); font-size: 1.4rem; font-variant-numeric: tabular-nums; display: block; }
 .avg span { font-size: .75rem; color: var(--muted); }
@@ -94,7 +97,7 @@ footer { font-size: .78rem; color: var(--muted); }
 .check input[type=time] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: .4rem .6rem; margin-left: auto; }
 /* number dial (weight): a ruler you drag sideways; each small tick is 0.1 */
 .readout { text-align: center; font-family: var(--display); font-variant-numeric: tabular-nums; }
-.readout b { font-size: 2.8rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.readout b { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
 .readout span { font-size: 1rem; color: var(--muted); margin-left: .3rem; }
 .readout.unset b { color: var(--muted); }
 .ruler { position: relative; height: 78px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; touch-action: pan-x; cursor: ew-resize;
@@ -128,10 +131,9 @@ footer { font-size: .78rem; color: var(--muted); }
 </head><body>
 <div class="wrap">
   <header>
-    <h1>Daily check-in</h1>
+    <h1 id="dayLabel">Today</h1>
     <div class="datebar">
       <button id="prev" aria-label="Previous day">‹</button>
-      <span class="day" id="dayLabel">Today</span>
       <button id="next" aria-label="Next day">›</button>
     </div>
   </header>
@@ -139,17 +141,16 @@ footer { font-size: .78rem; color: var(--muted); }
   <section class="dials" id="dials" aria-label="Ratings"></section>
 
   <div class="note">
-    <label for="note">Note (optional)</label>
-    <textarea id="note" placeholder="Anything worth remembering about today"></textarea>
+    <textarea id="note" placeholder="Add a note…" aria-label="Note"></textarea>
     <div class="status" id="status" role="status"></div>
   </div>
 
   <section class="panel" aria-label="Last 28 days">
-    <h2>Last 28 days</h2>
+    <h2>Last 2 weeks</h2>
     <div class="grid-wrap"><div class="grid" id="grid"></div></div>
     <div class="ticks" id="ticks"></div>
     <div class="avgs" id="avgs"></div>
-    <p class="empty" id="emptyMsg">Your check-ins will fill this grid. Mint squares are good days for that item, coral are bad, yellow is in between.</p>
+    <p class="empty" id="emptyMsg">Your check-ins will fill this grid. Mint is a good day for that item, coral a bad one.</p>
   </section>
 
   <details class="panel settings" id="indicators">
@@ -238,14 +239,13 @@ function buildDials() {
     el.className = "dial";
     if (isScale(m)) {
       el.style.setProperty("--n", 6);
-      el.innerHTML = `<div class="dial-head"><span class="dial-name">${esc(m.name)}</span><span class="dial-val" id="v-${m.key}">Not rated</span></div>
+      el.innerHTML = `<div class="dial-head"><span class="dial-name">${esc(m.name)}</span></div>
         <div class="scale" role="group" aria-label="${esc(m.name)}, 0 to 5">${SCALE.map(n => `<button id="b-${m.key}-${n}" data-k="${m.key}" data-n="${n}" aria-pressed="false" style="--b:${colour(goodness(m, n))}">${n}</button>`).join("")}</div>
-        <div class="anchors"><span>0 · ${esc(m.lo || "Low")}</span><span>5 · ${esc(m.hi || "High")}</span></div>`;
+        <div class="anchors"><span>${esc(m.lo || "Low")}</span><span>${esc(m.hi || "High")}</span></div>`;
     } else {
       el.innerHTML = `<div class="dial-head"><span class="dial-name">${esc(m.name)}</span><span class="dial-val" id="v-${m.key}">Not entered</span></div>
         <div class="readout" id="r-${m.key}"><b>–</b><span>${esc(m.unit || "")}</span></div>
-        <div class="ruler-wrap"><div class="ruler" id="ru-${m.key}" role="slider" tabindex="0" aria-label="${esc(m.name)}"><div class="ruler-track" id="rt-${m.key}"></div></div></div>
-        <div class="nudges"><button data-nk="${m.key}" data-d="-1" aria-label="Minus 0.1">− 0.1</button><button data-nk="${m.key}" data-d="0">Same as last</button><button data-nk="${m.key}" data-d="1" aria-label="Plus 0.1">+ 0.1</button><button data-nk="${m.key}" data-d="clear">Clear</button></div>`;
+        <div class="ruler-wrap"><div class="ruler" id="ru-${m.key}" role="slider" tabindex="0" aria-label="${esc(m.name)}"><div class="ruler-track" id="rt-${m.key}"></div></div></div>`;
     }
     dials.appendChild(el);
     if (!isScale(m)) setupRuler(m);
@@ -332,8 +332,6 @@ function renderDay() {
   for (const m of METRICS) {
     if (isScale(m)) {
       for (const n of SCALE) $(`b-${m.key}-${n}`).setAttribute("aria-pressed", e[m.key] === n ? "true" : "false");
-      const w = m.words?.[e[m.key]];
-      $(`v-${m.key}`).textContent = has(e[m.key]) ? (w ? `${e[m.key]} · ${w}` : String(e[m.key])) : "Not rated";
     } else {
       const v = has(e[m.key]) ? e[m.key] : null;
       const shown = v ?? lastValue(m.key, current) ?? m.start ?? 0;
@@ -348,34 +346,37 @@ function renderDay() {
     }
   }
   if (document.activeElement !== $("note")) $("note").value = e.note || "";
+  $("note").classList.toggle("has-text", !!$("note").value);
 }
 
 function renderHistory() {
   const t = todayIso();
-  const days = Array.from({ length: 28 }, (_, i) => shift(t, i - 27));
+  const days = Array.from({ length: 14 }, (_, i) => shift(t, i - 13));
   const grid = $("grid"); grid.innerHTML = "";
+  const avg = (key, n) => { const vs = []; for (let i = 0; i < n; i++) { const v = entries[shift(t, -i)]?.[key]; if (has(v)) vs.push(v); } return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null; };
   let any = false;
+  grid.insertAdjacentHTML("beforeend", `<div></div>${days.map(() => "<div></div>").join("")}<div class="hd">7-day</div>`);
   for (const m of METRICS.filter(isScale)) {
-    const l = document.createElement("div"); l.className = "lbl"; l.textContent = m.short || m.name; grid.appendChild(l);
+    let row = `<div class="lbl">${esc(m.short || m.name)}</div>`;
     for (const d of days) {
-      const c = document.createElement("div"); c.className = "cell";
       const v = entries[d]?.[m.key];
-      if (has(v)) { any = true; c.style.background = colour(goodness(m, v)); }
-      c.title = `${label(d)} — ${m.name}: ${v ?? "—"}`;
-      grid.appendChild(c);
+      if (has(v)) any = true;
+      row += `<div class="cell" title="${esc(label(d))} — ${esc(m.name)}: ${v ?? "—"}"${has(v) ? ` style="background:${colour(goodness(m, v))}"` : ""}></div>`;
     }
+    const a = avg(m.key, 7);
+    row += `<div class="av" style="color:${a == null ? "var(--muted)" : colour(goodness(m, a))}">${a == null ? "–" : a.toFixed(1)}</div>`;
+    grid.insertAdjacentHTML("beforeend", row);
   }
   const fmt = s => { const [y,mo,d] = s.split("-").map(Number); return new Date(y, mo-1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" }); };
-  $("ticks").innerHTML = `<span>${fmt(days[0])}</span><span>${fmt(days[14])}</span><span>Today</span>`;
+  $("ticks").innerHTML = `<span>${fmt(days[0])}</span><span>${fmt(days[7])}</span><span>Today</span>`;
   $("emptyMsg").hidden = any;
-
-  const avg = (from, to, k) => { const vs = []; for (let i = from; i < to; i++) { const v = entries[shift(t, -i)]?.[k]; if (has(v)) vs.push(v); } return vs.length ? vs.reduce((a,b)=>a+b,0)/vs.length : null; };
-  $("avgs").innerHTML = METRICS.map(m => {
-    const now = avg(0, 7, m.key), prev = avg(7, 14, m.key);
-    const diff = now != null && prev != null ? now - prev : null;
-    const d = diff == null ? "" : `${diff >= 0 ? "+" : "−"}${Math.abs(diff).toFixed(1)} vs prior week`;
-    const c = now == null ? "var(--line)" : isScale(m) ? colour(goodness(m, now)) : "var(--accent)";
-    return `<div class="avg" style="--c:${c}"><span>${esc(m.short || m.name)} · 7-day</span><b>${now == null ? "–" : now.toFixed(1)}</b><small>${d}</small></div>`;
+  // numbers (weight): one line each, 7-day average and change from the week before
+  $("avgs").innerHTML = METRICS.filter(m => !isScale(m)).map(m => {
+    const now = avg(m.key, 7);
+    const vs = []; for (let i = 7; i < 14; i++) { const v = entries[shift(t, -i)]?.[m.key]; if (has(v)) vs.push(v); }
+    const prev = vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
+    const d = now != null && prev != null ? now - prev : null;
+    return `<div class="wline"><span>${esc(m.name)} · 7-day${d == null ? "" : ` <small>(${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)} vs prior week)</small>`}</span><b>${now == null ? "–" : now.toFixed(1)}${m.unit ? " " + esc(m.unit) : ""}</b></div>`;
   }).join("");
 }
 
