@@ -148,7 +148,9 @@ footer { font-size: .78rem; color: var(--muted); }
 /* tabs */
 /* tab bar: a floating pill near the bottom, within thumb reach; every tab the same width */
 .tabs { position: fixed; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); margin: 0 auto; width: max-content; z-index: 10; display: flex; gap: 4px;
-  padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 30px; box-shadow: 0 8px 22px rgba(60, 40, 30, .12); }
+  padding: 6px; background: var(--surface); border: 1.5px solid #cdbdaa; border-radius: 30px; box-shadow: 0 10px 30px rgba(60, 40, 30, .24); }
+/* the page fades into the background behind the tab bar, so nothing busy shows around or under it */
+body::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(120px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 45%, transparent); pointer-events: none; z-index: 9; }
 /* icons only; the current tab is a soft green capsule with its name beside the icon. Every tab is the same width. */
 .tabs button { flex: none; width: 108px; min-height: 50px; border: 0; border-radius: 24px; background: transparent; color: var(--muted); font: 700 .85rem var(--body); cursor: pointer;
   display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px; transition: background .15s, color .15s; }
