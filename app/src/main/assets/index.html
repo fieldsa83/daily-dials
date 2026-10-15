@@ -109,9 +109,16 @@ footer { font-size: .78rem; color: var(--muted); }
 .bub-box span { font: 400 .8rem var(--body); color: #3d4a54; }
 .bub i { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid var(--bub); }
 /* tabs */
-.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px; background: var(--empty); margin-top: -.5rem; }
-.tabs button { min-height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font: 700 .95rem var(--body); cursor: pointer; }
-.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(24, 34, 43, .12); }
+/* tab bar along the bottom, within thumb reach */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; justify-content: center; gap: 4px;
+  padding: 6px 12px calc(6px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -2px 10px rgba(24, 34, 43, .06); }
+.tabs button { flex: 1; max-width: 11rem; min-height: 56px; border: 0; border-radius: 14px; background: transparent; color: var(--muted); font: 700 .78rem var(--body); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.tabs button svg { width: 24px; height: 24px; }
+.tabs button[aria-selected="true"] { color: var(--ink); background: color-mix(in srgb, #69db7c 30%, var(--surface)); }
+.wrap { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
+body.on-settings header { display: none; }
+.settings h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0; }
 .tab { display: flex; flex-direction: column; gap: 1.5rem; }
 .tab[hidden] { display: none; }
 /* number chart (weight over time) */
@@ -157,11 +164,6 @@ footer { font-size: .78rem; color: var(--muted); }
     </div>
   </header>
 
-  <nav class="tabs" role="tablist" aria-label="Sections">
-    <button role="tab" id="tb-checkin" data-tab="checkin" aria-selected="true">Check-in</button>
-    <button role="tab" id="tb-weight" data-tab="weight" aria-selected="false">Weight</button>
-  </nav>
-
   <div class="tab" id="tab-checkin" role="tabpanel" aria-labelledby="tb-checkin">
   <section class="dials" id="dials" aria-label="Ratings"></section>
 
@@ -184,8 +186,9 @@ footer { font-size: .78rem; color: var(--muted); }
     <div id="charts"></div>
   </div>
 
-  <details class="panel settings" id="indicators">
-    <summary>Indicators</summary>
+  <div class="tab" id="tab-settings" role="tabpanel" aria-labelledby="tb-settings" hidden>
+  <section class="panel settings" id="indicators">
+    <h2>Indicators</h2>
     <div class="set-body">
       <p class="hint">Rename by typing. Arrows change the order here and in the notification. Removing hides an indicator; its past values stay in the sheet.</p>
       <div id="indList"></div>
@@ -199,10 +202,10 @@ footer { font-size: .78rem; color: var(--muted); }
         <div class="row"><button class="btn" id="addInd">Add</button></div>
       </fieldset>
     </div>
-  </details>
+  </section>
 
-  <details class="panel settings" id="settings">
-    <summary>Settings &amp; sync</summary>
+  <section class="panel settings" id="settings">
+    <h2>Reminder, sync &amp; import</h2>
     <div class="set-body">
       <fieldset class="group">
         <legend>Reminder</legend>
@@ -224,8 +227,15 @@ footer { font-size: .78rem; color: var(--muted); }
       <label class="field"><span>Import entries</span><textarea id="importBox" placeholder="Paste entries from the old Daily Dials page, or weight history as lines of date, weight (e.g. 2019-03-04, 137.2)"></textarea></label>
       <div class="row"><button class="btn ghost" id="doImport">Import</button></div>
     </div>
-  </details>
+  </section>
+  </div>
 </div>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" id="tb-checkin" data-tab="checkin" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg><span>Check-in</span></button>
+  <button role="tab" id="tb-weight" data-tab="weight" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19h16"/><path d="M6 15l4-5 3 3 5-6"/></svg><span id="tb-weight-label">Weight</span></button>
+  <button role="tab" id="tb-settings" data-tab="settings" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
+</nav>
 <script>
 // The indicators come from assets/indicators.json, or the edited copy the app keeps (see "Indicators" panel).
 // kind "scale" = a 0–5 dial; kind "number" = a ruler with one decimal (weight). "hidden" = removed.
@@ -267,7 +277,7 @@ function buildDials() {
   $("numDials").innerHTML = ""; $("charts").innerHTML = "";
   rulers.clear();
   const nums = METRICS.filter(m => !isScale(m));
-  $("tb-weight").textContent = nums.length === 1 ? nums[0].name : "Numbers";
+  $("tb-weight-label").textContent = nums.length === 1 ? nums[0].name : "Numbers";
   $("tb-weight").hidden = !nums.length;
   if (!nums.length && currentTab === "weight") showTab("checkin");
   for (const m of METRICS) {
@@ -408,10 +418,12 @@ function renderHistory() {
 let currentTab = "checkin";
 function showTab(name) {
   currentTab = name;
-  for (const t of ["checkin", "weight"]) {
+  for (const t of ["checkin", "weight", "settings"]) {
     $(`tab-${t}`).hidden = t !== name;
     $(`tb-${t}`).setAttribute("aria-selected", String(t === name));
   }
+  document.body.classList.toggle("on-settings", name === "settings");
+  window.scrollTo(0, 0);
   try { localStorage.setItem("dailydials.tab", name); } catch {}
   if (name === "weight") { renderDay(); renderCharts(); }
 }
@@ -764,7 +776,7 @@ loadIndicators().then(list => {
   INDICATORS = Array.isArray(list) ? list : [];
   applyIndicators(false);
   let t = "checkin"; try { t = localStorage.getItem("dailydials.tab") || "checkin"; } catch {}
-  if (t === "weight" && !$("tb-weight").hidden) showTab("weight");
+  if (t === "settings" || (t === "weight" && !$("tb-weight").hidden)) showTab(t);
 });
 </script>
 </body></html>
