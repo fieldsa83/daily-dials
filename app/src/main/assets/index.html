@@ -14,7 +14,7 @@
   --accent: #6b4f3f;
   --ch-line: #1f4e79; --ch-dot: #b9d3ea; --ch-dot-edge: #3a6f9f; --ch-target: #a83232;
   --good: #94bb8b;          /* the green used for the weight bubble and the chart */
-  --good-deep: #71a993;
+  --good-deep: #66bb57;
   --warn: #c0705c;          /* the target line */
   --pain: #c2543a;
   --activity: #2f7d4f;
@@ -276,7 +276,7 @@ body.on-settings header { display: none; }
 let INDICATORS = [];
 let METRICS = [];   // the visible ones, in order
 // one fixed colour per step, worst → best (no blending, so no muddy in-betweens)
-const STOPS = ["#d98d7c", "#dfa877", "#dbc27b", "#bccf99", "#94bb8b", "#71a993"];   // terracotta → sage → teal
+const STOPS = ["#de8878", "#efac72", "#f3d465", "#c4d98f", "#94bb8b", "#66bb57"];   // coral → orange → yellow → green
 function goodness(m, v) { const t = v / 5; return m.high ? t : 1 - t; }
 function colour(g) {
   return STOPS[Math.round(Math.max(0, Math.min(1, g)) * (STOPS.length - 1))];

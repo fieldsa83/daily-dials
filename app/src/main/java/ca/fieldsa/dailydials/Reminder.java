@@ -191,7 +191,7 @@ final class Reminder {
     private static Notification.Builder builder(Context c, Store store) {
         return new Notification.Builder(c, channel(c, store.alert()))
                 .setSmallIcon(R.drawable.ic_notif)
-                .setColor(0xFF71A993)
+                .setColor(0xFF66BB57)
                 .setShowWhen(true);
     }
 
