@@ -108,6 +108,28 @@ footer { font-size: .78rem; color: var(--muted); }
 .bub.set .bub-box { box-shadow: 0 6px 14px rgba(24, 34, 43, .25); }
 .bub-box span { font: 400 .8rem var(--body); color: #3d4a54; }
 .bub i { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid var(--bub); }
+/* tabs */
+.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px; background: var(--empty); margin-top: -.5rem; }
+.tabs button { min-height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font: 700 .95rem var(--body); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(24, 34, 43, .12); }
+.tab { display: flex; flex-direction: column; gap: 1.5rem; }
+.tab[hidden] { display: none; }
+/* number chart (weight over time) */
+.chart-panel { display: flex; flex-direction: column; gap: .8rem; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+.stats div { display: flex; flex-direction: column; }
+.stats span { font-size: .72rem; color: var(--muted); }
+.stats b { font: 700 1.15rem var(--display); font-variant-numeric: tabular-nums; }
+.chips { display: flex; gap: .3rem; flex-wrap: wrap; }
+.chip-row { display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+.chip { min-height: 34px; padding: 0 .7rem; border-radius: 17px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: 700 .8rem var(--body); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.chart { position: relative; touch-action: pan-y; }
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart .ax { font: 400 10.5px var(--body); fill: var(--muted); font-variant-numeric: tabular-nums; }
+.readout-tip { position: absolute; top: 0; transform: translateX(-50%); padding: .2rem .5rem; border-radius: 8px; background: var(--ink); color: var(--surface); font: 700 .75rem var(--body); white-space: nowrap; pointer-events: none; }
+.target-row { display: flex; align-items: center; gap: .4rem; font-size: .85rem; color: var(--muted); }
+.target-row input { width: 4.5rem; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: .3rem .5rem; }
 /* indicator editor */
 .ind { display: flex; flex-direction: column; gap: .4rem; padding: .6rem 0; border-bottom: 1px solid var(--line); }
 .ind:last-child { border-bottom: 0; }
@@ -135,6 +157,12 @@ footer { font-size: .78rem; color: var(--muted); }
     </div>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tb-checkin" data-tab="checkin" aria-selected="true">Check-in</button>
+    <button role="tab" id="tb-weight" data-tab="weight" aria-selected="false">Weight</button>
+  </nav>
+
+  <div class="tab" id="tab-checkin" role="tabpanel" aria-labelledby="tb-checkin">
   <section class="dials" id="dials" aria-label="Ratings"></section>
 
   <div class="note">
@@ -149,6 +177,12 @@ footer { font-size: .78rem; color: var(--muted); }
     <div class="avgs" id="avgs"></div>
     <p class="empty" id="emptyMsg">Your check-ins will fill this grid. Mint is a good day for that item, coral a bad one.</p>
   </section>
+  </div>
+
+  <div class="tab" id="tab-weight" role="tabpanel" aria-labelledby="tb-weight" hidden>
+    <section class="dials" id="numDials" aria-label="Numbers"></section>
+    <div id="charts"></div>
+  </div>
 
   <details class="panel settings" id="indicators">
     <summary>Indicators</summary>
@@ -187,7 +221,7 @@ footer { font-size: .78rem; color: var(--muted); }
       <label class="field"><span>Google Sheet link</span><input type="url" id="sheetUrl" placeholder="https://script.google.com/macros/s/…/exec?token=…" autocomplete="off"></label>
       <div class="row"><button class="btn" id="saveSettings">Save settings</button><button class="btn ghost" id="syncNow">Sync now</button><button class="btn ghost" id="testRem">Show test reminder</button></div>
       <p class="hint" id="syncStatus">Not connected to a sheet yet. Entries are saved on this phone.</p>
-      <label class="field"><span>Import entries</span><textarea id="importBox" placeholder="Paste entries copied from the old Daily Dials page"></textarea></label>
+      <label class="field"><span>Import entries</span><textarea id="importBox" placeholder="Paste entries from the old Daily Dials page, or weight history as lines of date, weight (e.g. 2019-03-04, 137.2)"></textarea></label>
       <div class="row"><button class="btn ghost" id="doImport">Import</button></div>
     </div>
   </details>
@@ -230,7 +264,12 @@ const $ = id => document.getElementById(id);
 const dials = $("dials");
 function buildDials() {
   dials.innerHTML = "";
+  $("numDials").innerHTML = ""; $("charts").innerHTML = "";
   rulers.clear();
+  const nums = METRICS.filter(m => !isScale(m));
+  $("tb-weight").textContent = nums.length === 1 ? nums[0].name : "Numbers";
+  $("tb-weight").hidden = !nums.length;
+  if (!nums.length && currentTab === "weight") showTab("checkin");
   for (const m of METRICS) {
     const el = document.createElement("div");
     el.className = "dial";
@@ -243,8 +282,10 @@ function buildDials() {
       el.innerHTML = `<div class="dial-head"><span class="dial-name">${esc(m.name)}</span><span class="dial-val" id="v-${m.key}"></span></div>
         <div class="rul" id="ru-${m.key}" role="slider" tabindex="0" aria-label="${esc(m.name)}${m.unit ? " in " + esc(m.unit) : ""}"></div>`;
     }
-    dials.appendChild(el);
-    if (!isScale(m)) setupRuler(m);
+    if (isScale(m)) { dials.appendChild(el); continue; }
+    $("numDials").appendChild(el);
+    setupRuler(m);
+    buildChart(m);
   }
 }
 
@@ -338,6 +379,7 @@ function renderDay() {
 }
 
 function renderHistory() {
+  renderCharts();
   const t = todayIso();
   const days = Array.from({ length: 14 }, (_, i) => shift(t, i - 13));
   const grid = $("grid"); grid.innerHTML = "";
@@ -358,15 +400,143 @@ function renderHistory() {
   const fmt = s => { const [y,mo,d] = s.split("-").map(Number); return new Date(y, mo-1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" }); };
   $("ticks").innerHTML = `<span>${fmt(days[0])}</span><span>${fmt(days[7])}</span><span>Today</span>`;
   $("emptyMsg").hidden = any;
-  // numbers (weight): one line each, 7-day average and change from the week before
-  $("avgs").innerHTML = METRICS.filter(m => !isScale(m)).map(m => {
-    const now = avg(m.key, 7);
-    const vs = []; for (let i = 7; i < 14; i++) { const v = entries[shift(t, -i)]?.[m.key]; if (has(v)) vs.push(v); }
-    const prev = vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
-    const d = now != null && prev != null ? now - prev : null;
-    return `<div class="wline"><span>${esc(m.name)} · 7-day${d == null ? "" : ` <small>(${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)} vs prior week)</small>`}</span><b>${now == null ? "–" : now.toFixed(1)}${m.unit ? " " + esc(m.unit) : ""}</b></div>`;
-  }).join("");
+  $("avgs").innerHTML = "";   // numbers like weight have their own tab now
 }
+
+// ---- tabs
+let currentTab = "checkin";
+function showTab(name) {
+  currentTab = name;
+  for (const t of ["checkin", "weight"]) {
+    $(`tab-${t}`).hidden = t !== name;
+    $(`tb-${t}`).setAttribute("aria-selected", String(t === name));
+  }
+  try { localStorage.setItem("dailydials.tab", name); } catch {}
+  if (name === "weight") { renderDay(); renderCharts(); }
+}
+document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab); });
+
+// ---- number charts (adapted from the R/plotly weight chart): daily readings as dots,
+// a monthly / weekly / daily line with missing days filled in by straight lines, a dashed target, range chips
+const CH = { range: "1Y", view: "M" };
+try { Object.assign(CH, JSON.parse(localStorage.getItem("dailydials.chart") || "{}")); } catch {}
+const RANGES = { "1M": 31, "3M": 92, "1Y": 366, "5Y": 1827, "All": Infinity };
+const dayNum = s => { const [y, m, d] = s.split("-").map(Number); return Math.round(Date.UTC(y, m - 1, d) / 864e5); };
+const dayStr = n => new Date(n * 864e5).toISOString().slice(0, 10);
+const fmtDay = (n, opts) => new Date(n * 864e5).toLocaleDateString(undefined, { timeZone: "UTC", ...opts });
+function readings(key) {          // [dayNumber, value] for days actually entered (not carried forward)
+  return Object.keys(entries).filter(d => has(entries[d]?.[key]) && !entries[d][`${key}_carried`]).sort().map(d => [dayNum(d), Number(entries[d][key])]);
+}
+function filled(pts) {             // every day from first to last reading, gaps filled by straight lines
+  const out = [];
+  for (let i = 0; i < pts.length; i++) {
+    out.push(pts[i]);
+    const nx = pts[i + 1]; if (!nx) break;
+    for (let t = pts[i][0] + 1; t < nx[0]; t++) out.push([t, pts[i][1] + (nx[1] - pts[i][1]) * (t - pts[i][0]) / (nx[0] - pts[i][0])]);
+  }
+  return out;
+}
+function grouped(daily, keyOf) {   // average of the filled-in days in each week or month
+  const g = new Map();
+  for (const [t, v] of daily) { const k = keyOf(t); const a = g.get(k) || [0, 0]; a[0] += v; a[1]++; g.set(k, a); }
+  return [...g.entries()].map(([k, [sum, n]]) => [k, sum / n]).sort((a, b) => a[0] - b[0]);
+}
+const weekStart = t => t - ((t + 4) % 7);                 // Sunday, like lubridate's floor_date(unit = "week")
+const monthStart = t => dayNum(dayStr(t).slice(0, 8) + "01");
+function buildChart(m) {
+  const el = document.createElement("section");
+  el.className = "panel chart-panel"; el.id = `ch-${m.key}`;
+  el.innerHTML = `<h2 style="margin:0">${esc(m.name)} over time</h2>
+    <div class="stats" id="st-${m.key}"></div>
+    <div class="chip-row"><div class="chips" data-ck="range">${Object.keys(RANGES).map(r => `<button class="chip" data-v="${r}">${r}</button>`).join("")}</div>
+      <div class="chips" data-ck="view"><button class="chip" data-v="M">Monthly</button><button class="chip" data-v="W">Weekly</button><button class="chip" data-v="D">Daily</button></div></div>
+    <div class="chart" id="cv-${m.key}"></div>
+    <label class="target-row">Target <input type="number" step="0.1" inputmode="decimal" id="tg-${m.key}" value="${m.target ?? ""}" placeholder="none"> ${esc(m.unit || "")}</label>`;
+  $("charts").appendChild(el);
+  el.addEventListener("click", e => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    CH[b.parentElement.dataset.ck] = b.dataset.v;
+    try { localStorage.setItem("dailydials.chart", JSON.stringify(CH)); } catch {}
+    renderCharts();
+  });
+  $(`tg-${m.key}`).addEventListener("change", e => {
+    const v = parseFloat(e.target.value);
+    const ind = INDICATORS.find(x => x.key === m.key); if (!ind) return;
+    if (isNaN(v)) delete ind.target; else ind.target = Math.round(v * 10) / 10;
+    applyIndicators(true);
+  });
+  const cv = $(`cv-${m.key}`);
+  const tip = e => {
+    const st = cv._state; if (!st) return;
+    const r = cv.getBoundingClientRect(), x = e.clientX - r.left;
+    let best = null;
+    for (const p of st.line) { const px = st.X(p[0]); if (!best || Math.abs(px - x) < Math.abs(best.px - x)) best = { p, px }; }
+    if (!best) return;
+    let t = cv.querySelector(".readout-tip"); if (!t) { t = document.createElement("div"); t.className = "readout-tip"; cv.appendChild(t); }
+    const lbl = st.view === "M" ? fmtDay(best.p[0], { month: "short", year: "numeric" }) : st.view === "W" ? "Week of " + fmtDay(best.p[0], { month: "short", day: "numeric" }) : fmtDay(best.p[0], { month: "short", day: "numeric", year: "numeric" });
+    t.textContent = `${lbl} · ${best.p[1].toFixed(1)}`;
+    t.style.left = `${Math.min(Math.max(best.px, 60), r.width - 60)}px`;
+    let g = cv.querySelector(".tipline"); if (g) g.setAttribute("x1", best.px), g.setAttribute("x2", best.px), g.style.display = "";
+  };
+  cv.addEventListener("pointerdown", tip);
+  cv.addEventListener("pointermove", e => { if (e.buttons || e.pointerType === "mouse") tip(e); });
+}
+function renderCharts() {
+  if (currentTab !== "weight") return;
+  for (const m of METRICS) if (!isScale(m)) renderChart(m);
+}
+function renderChart(m) {
+  const cv = $(`cv-${m.key}`); if (!cv) return;
+  for (const g of document.querySelectorAll(`#ch-${m.key} .chips`)) for (const b of g.children) b.setAttribute("aria-pressed", String(b.dataset.v === CH[g.dataset.ck]));
+  const pts = readings(m.key), today = dayNum(todayIso());
+  const st = $(`st-${m.key}`);
+  if (!pts.length) { st.innerHTML = ""; cv.innerHTML = `<p class="empty">Your ${esc(m.name.toLowerCase())} readings will be charted here. You can paste past readings under Settings &amp; sync → Import.</p>`; cv._state = null; return; }
+  const daily = filled(pts);
+  const at = t => { let v = null; for (const p of daily) { if (p[0] > t) break; v = p[1]; } return v; };
+  const last = pts[pts.length - 1], ago = at(last[0] - 30);
+  const fmtD = d => d == null ? "–" : `${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}`;
+  st.innerHTML = `<div><span>Latest · ${fmtDay(last[0], { month: "short", day: "numeric" })}</span><b>${last[1].toFixed(1)}</b></div>
+    <div><span>30-day change</span><b>${fmtD(ago == null ? null : last[1] - ago)}</b></div>
+    <div><span>To target</span><b>${m.target == null ? "–" : fmtD(last[1] - m.target)}</b></div>`;
+  const line = CH.view === "M" ? grouped(daily, monthStart) : CH.view === "W" ? grouped(daily, weekStart) : daily;
+  const end = Math.max(today, last[0]) + 3, span = RANGES[CH.range] ?? 366;
+  const start = span === Infinity ? pts[0][0] - 3 : end - span;
+  const visD = pts.filter(p => p[0] >= start), visL = line.filter(p => p[0] >= start - 40);
+  const ys = [...visD.map(p => p[1]), ...visL.filter(p => p[0] >= start).map(p => p[1])];
+  if (m.target != null) ys.push(m.target);
+  if (!ys.length) ys.push(last[1]);
+  let lo = Math.min(...ys), hi = Math.max(...ys);
+  if (hi - lo < 2) { const c = (hi + lo) / 2; lo = c - 1; hi = c + 1; }
+  const step = [0.5, 1, 2, 5, 10, 20].find(s => (hi - lo) / s <= 5) || 50;
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const W = cv.clientWidth || 340, H = 230, L = 36, R = 8, T = 10, B = 24;
+  const X = t => L + (t - start) / (end - start) * (W - L - R), Y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(m.name)} chart"><defs><clipPath id="cp-${m.key}"><rect x="${L}" y="0" width="${W - L - R}" height="${H}"/></clipPath></defs>`;
+  for (let v = lo; v <= hi + 1e-9; v += step) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text class="ax" x="${L - 6}" y="${Y(v) + 3.5}" text-anchor="end">${+v.toFixed(1)}</text>`;
+  // x labels: years, months or days depending on the span
+  const days = end - start, ticks = [];
+  for (let t = Math.ceil(start); t <= end; t++) {
+    const s = dayStr(t);
+    if (days > 1100 ? s.endsWith("-01-01") : days > 120 ? s.endsWith("-01") && (days < 400 || ["01", "04", "07", "10"].includes(s.slice(5, 7))) : (t - start) % 7 === 0) ticks.push(t);
+  }
+  // keep labels at least ~52px apart so they never run into each other
+  let lastX = -1e9;
+  for (const t of ticks) {
+    const x = X(t); if (x - lastX < 52 || x < L + 14 || x > W - R - 14) continue;
+    lastX = x;
+    const lbl = days > 1100 ? dayStr(t).slice(0, 4) : days > 120 ? (dayStr(t).slice(5, 7) === "01" ? dayStr(t).slice(0, 4) : fmtDay(t, { month: "short" })) : fmtDay(t, { month: "short", day: "numeric" });
+    svg += `<text class="ax" x="${x}" y="${H - 6}" text-anchor="middle">${lbl}</text>`;
+  }
+  svg += `<g clip-path="url(#cp-${m.key})">`;
+  const r = visD.length > 400 ? 1.6 : visD.length > 120 ? 2.2 : 3;
+  for (const [t, v] of visD) svg += `<circle cx="${X(t).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${r}" fill="#b2f2bb" stroke="#2f9e44" stroke-width=".8" opacity=".75"/>`;
+  if (visL.length) svg += `<polyline fill="none" stroke="#1d5f6b" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${visL.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ")}"/>`;
+  if (m.target != null) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(m.target)}" y2="${Y(m.target)}" stroke="#c2543a" stroke-width="1.5" stroke-dasharray="4 4"/><text class="ax" x="${W - R - 2}" y="${Y(m.target) - 5}" text-anchor="end" style="fill:#c2543a">Target ${m.target}</text>`;
+  svg += `<line class="tipline" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--ink)" stroke-width="1" opacity=".35" style="display:none"/></g></svg>`;
+  cv.innerHTML = svg;
+  cv._state = { line: visL.filter(p => p[0] >= start), X, view: CH.view };
+}
+window.addEventListener("resize", () => renderCharts());
 
 // ---- saving
 let pending = new Set(), saving = false;
@@ -473,16 +643,36 @@ $("saveSettings").onclick = () => {
 $("syncNow").onclick = () => { if (App) { $("syncStatus").textContent = "Syncing…"; App.syncNow(); } };
 $("testRem").onclick = () => { if (App) App.testReminder(); };
 $("doImport").onclick = () => {
-  let data;
-  try { data = JSON.parse($("importBox").value); } catch { $("syncStatus").textContent = "That doesn't look like copied entries. Copy them again from the old page and paste the whole thing."; return; }
-  let n = 0;
-  for (const [d, e] of Object.entries(data)) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || typeof e !== "object") continue;
-    entries[d] = { ...e, date: d }; pending.add(d); n++;
+  const text = $("importBox").value.trim(); if (!text) return;
+  const touched = {};
+  let data = null;
+  try { data = JSON.parse(text); } catch {}
+  if (data && typeof data === "object") {
+    for (const [d, e] of Object.entries(data)) if (/^\d{4}-\d{2}-\d{2}$/.test(d) && typeof e === "object") touched[d] = { ...e, date: d };
+  } else {
+    // weight history pasted from a sheet: "2019-03-04, 137.2" or "3/4/2019<tab>137.2" per line
+    const num = METRICS.find(m => !isScale(m)) || { key: "weight" };
+    for (const line of text.split(/\r?\n/)) {
+      const mt = line.trim().match(/^(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}\/\d{1,2}\/\d{4})[\s,;]+(\d+(?:[.,]\d+)?)/);
+      if (!mt) continue;
+      let y, mo, d;
+      if (mt[1].includes("/")) [mo, d, y] = mt[1].split("/").map(Number); else [y, mo, d] = mt[1].split("-").map(Number);
+      const iso = `${y}-${pad(mo)}-${pad(d)}`, v = Math.round(parseFloat(mt[2].replace(",", ".")) * 10) / 10;
+      if (isNaN(v)) continue;
+      const cur = { ...(entries[iso] || {}), date: iso };
+      cur[num.key] = v; delete cur[`${num.key}_carried`];
+      touched[iso] = cur;
+    }
   }
-  drain(); renderDay(); renderHistory();
+  const n = Object.keys(touched).length;
+  if (!n) { $("syncStatus").textContent = "Nothing to import. Paste entries from the old page, or lines like 2019-03-04, 137.2"; return; }
+  const now = new Date().toISOString();
+  for (const d in touched) { touched[d].updatedAt = now; entries[d] = touched[d]; }
+  if (App && App.saveMany) App.saveMany(JSON.stringify(touched));
+  else { for (const d in touched) pending.add(d); drain(); }
+  renderDay(); renderHistory();
   $("importBox").value = "";
-  $("syncStatus").textContent = `Imported ${n} day${n === 1 ? "" : "s"}.`;
+  $("syncStatus").textContent = `Imported ${n} day${n === 1 ? "" : "s"}.${App ? " They'll go up to the sheet in batches." : ""}`;
 };
 
 // ---- indicators: load, save, edit
@@ -569,6 +759,11 @@ $("addInd").onclick = () => {
 
 entries = loadAll();
 renderDay(); renderHistory(); loadSettings();
-loadIndicators().then(list => { INDICATORS = Array.isArray(list) ? list : []; applyIndicators(false); });
+loadIndicators().then(list => {
+  INDICATORS = Array.isArray(list) ? list : [];
+  applyIndicators(false);
+  let t = "checkin"; try { t = localStorage.getItem("dailydials.tab") || "checkin"; } catch {}
+  if (t === "weight" && !$("tb-weight").hidden) showTab("weight");
+});
 </script>
 </body></html>

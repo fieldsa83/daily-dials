@@ -68,35 +68,46 @@ function doGet(e) {
   return json_({ ok: true, entries });
 }
 
-/** The app sends one day at a time; an existing row for that date is replaced. */
+/**
+ * The app sends one day ({action: 'save', entry}) or many ({action: 'saveMany', entries: [...]}, used after an import).
+ * An existing row for a date is replaced.
+ */
 function doPost(e) {
   if (e.parameter.token !== TOKEN) return json_({ ok: false, error: 'wrong token' });
-  const entry = (JSON.parse(e.postData.contents) || {}).entry || {};
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.date || '')) return json_({ ok: false, error: 'missing date' });
+  const body = JSON.parse(e.postData.contents) || {};
+  const list = body.action === 'saveMany' ? (body.entries || []) : [body.entry || {}];
+  const good = list.filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.date || ''));
+  if (!good.length) return json_({ ok: false, error: 'missing date' });
 
   const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
+  lock.waitLock(20000);
   try {
     const sh = sheet_();
     const keys = keys_(sh);
     // A new indicator: add its column at the end.
-    for (const key of Object.keys(entry)) {
+    for (const entry of good) for (const key of Object.keys(entry)) {
       if (keys.includes(key) || entry[key] === null || entry[key] === '' || !/^[a-z][a-z0-9_]*$/i.test(key)) continue;
       keys.push(key);
       sh.getRange(1, keys.length).setValue(HEADER_FOR[key] || key).setFontWeight('bold');
     }
-    const row = keys.map(key => (entry[key] === undefined || entry[key] === null ? '' : entry[key]));
+    // Read every row once, replace or add the sent days, write everything back once, sorted by date.
     const n = sh.getLastRow() - 1;
-    const dates = n > 0 ? sh.getRange(2, 1, n, 1).getDisplayValues().map(r => r[0]) : [];
-    const at = dates.indexOf(entry.date);
-    const target = at >= 0 ? at + 2 : sh.getLastRow() + 1;
-    sh.getRange(target, 1).setNumberFormat('@');
-    sh.getRange(target, 1, 1, row.length).setValues([row]);
-    if (at < 0 && sh.getLastRow() > 2) sh.getRange(2, 1, sh.getLastRow() - 1, keys.length).sort(1);
+    const rows = n > 0 ? sh.getRange(2, 1, n, keys.length).getValues() : [];
+    const shown = n > 0 ? sh.getRange(2, 1, n, 1).getDisplayValues().map(r => r[0]) : [];
+    const at = new Map(shown.map((d, i) => [d, i]));
+    for (const entry of good) {
+      const row = keys.map(key => (entry[key] === undefined || entry[key] === null ? '' : entry[key]));
+      if (at.has(entry.date)) rows[at.get(entry.date)] = row;
+      else { at.set(entry.date, rows.length); rows.push(row); shown.push(entry.date); }
+    }
+    const order = rows.map((r, i) => i).sort((x, y) => (shown[x] < shown[y] ? -1 : shown[x] > shown[y] ? 1 : 0));
+    const sorted = order.map(i => { const r = rows[i].slice(); r[0] = shown[i]; while (r.length < keys.length) r.push(''); return r; });
+    sh.getRange(2, 1, sorted.length, 1).setNumberFormat('@');
+    sh.getRange(2, 1, sorted.length, keys.length).setValues(sorted);
   } finally {
     lock.releaseLock();
   }
-  return json_({ ok: true });
+  return json_({ ok: true, saved: good.length });
 }
 
 /** Run once from the editor to create the sheet tab and approve permissions. */

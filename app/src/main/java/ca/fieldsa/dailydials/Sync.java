@@ -38,7 +38,33 @@ final class Sync {
                 status = "Not connected to a sheet yet. Entries are saved on this phone.";
             } else {
                 try {
-                    for (String date : store.pendingDates()) {
+                    // Up to 300 days per request, so an imported history goes up in a few calls.
+                    // An older sheet script without "saveMany" answers "missing date"; then it's one day per request.
+                    java.util.List<String> dates = new java.util.ArrayList<>(store.pendingDates());
+                    java.util.Collections.sort(dates);
+                    boolean batches = dates.size() > 1;
+                    for (int i = 0; i < dates.size(); ) {
+                        if (batches) {
+                            org.json.JSONArray list = new org.json.JSONArray();
+                            java.util.List<String> sent = new java.util.ArrayList<>();
+                            for (int j = i; j < dates.size() && sent.size() < 300; j++) {
+                                JSONObject entry = store.get(dates.get(j));
+                                if (entry != null) list.put(entry);
+                                sent.add(dates.get(j));
+                            }
+                            JSONObject body = new JSONObject();
+                            body.put("action", "saveMany");
+                            body.put("entries", list);
+                            JSONObject res = parse(http(url, body.toString()));
+                            if (res.optBoolean("ok")) {
+                                for (String d : sent) store.clearPending(d);
+                                i += sent.size();
+                                continue;
+                            }
+                            if (!"missing date".equals(res.optString("error"))) throw new IOException(res.optString("error", "the sheet refused the entries"));
+                            batches = false; // older script: fall back to one at a time
+                        }
+                        String date = dates.get(i++);
                         JSONObject entry = store.get(date);
                         if (entry == null) {
                             store.clearPending(date);

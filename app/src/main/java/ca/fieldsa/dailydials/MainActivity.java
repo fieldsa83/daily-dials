@@ -124,6 +124,22 @@ public class MainActivity extends Activity {
             runOnUiThread(MainActivity.this::syncLater);
         }
 
+        /** Many days at once (an import): {"2019-03-04": {...}, ...}. */
+        @JavascriptInterface
+        public void saveMany(String json) {
+            try {
+                JSONObject all = new JSONObject(json);
+                java.util.Iterator<String> it = all.keys();
+                while (it.hasNext()) {
+                    String date = it.next();
+                    store.put(date, all.getJSONObject(date), true);
+                }
+            } catch (JSONException e) {
+                return;
+            }
+            runOnUiThread(MainActivity.this::syncLater);
+        }
+
         @JavascriptInterface
         public String getIndicators() {
             return store.indicatorsJson();
