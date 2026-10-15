@@ -12,6 +12,7 @@
   --muted: #7a6a5e;
   --line: #ddd0c1;
   --accent: #6b4f3f;
+  --ch-line: var(--accent); --ch-dot: #cfdcb4; --ch-dot-edge: #71a993; --ch-target: var(--warn);
   --good: #94bb8b;          /* the green used for the weight bubble and the chart */
   --good-deep: #71a993;
   --warn: #c0705c;          /* the target line */
@@ -588,10 +589,10 @@ function renderChart(m) {
   }
   svg += `<g clip-path="url(#cp-${m.key})">`;
   const r = visD.length > 400 ? 1.6 : visD.length > 120 ? 2.2 : 3;
-  for (const [t, v] of visD) svg += `<circle cx="${X(t).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${r}" fill="#cfdcb4" stroke="#71a993" stroke-width=".8" opacity=".8"/>`;
-  if (visL.length && CH.view !== "D") svg += `<polyline fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${visL.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ")}"/>`;
+  for (const [t, v] of visD) svg += `<circle cx="${X(t).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${r}" fill="var(--ch-dot)" stroke="var(--ch-dot-edge)" stroke-width=".8" opacity=".8"/>`;
+  if (visL.length && CH.view !== "D") svg += `<polyline fill="none" stroke="var(--ch-line)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${visL.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ")}"/>`;
   // target: a dashed line across, with the word "Target" just below it at the far left
-  if (m.target != null) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(m.target)}" y2="${Y(m.target)}" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="4 4"/><text class="ax" x="${L + 2}" y="${Y(m.target) + 13}" text-anchor="start" style="fill:var(--warn)">Target</text>`;
+  if (m.target != null) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(m.target)}" y2="${Y(m.target)}" stroke="var(--ch-target)" stroke-width="1.5" stroke-dasharray="4 4"/><text class="ax" x="${L + 2}" y="${Y(m.target) + 13}" text-anchor="start" style="fill:var(--ch-target)">Target</text>`;
   svg += `<circle class="pick" r="6" fill="none" stroke="var(--ink)" stroke-width="2" style="display:none"/><line class="tipline" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--ink)" stroke-width="1" opacity=".35" style="display:none"/></g></svg>`;
   cv.innerHTML = svg;
   cv._state = { line: CH.view === "D" ? [] : visL.filter(p => p[0] >= start), dots: visD, X, Y, view: CH.view };
