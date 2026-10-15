@@ -37,7 +37,13 @@
 * { box-sizing: border-box; }
 body { margin: 0; -webkit-tap-highlight-color: transparent; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; }
 .wrap { max-width: 34rem; margin: 0 auto; padding: 1.25rem 16px 3rem; display: flex; flex-direction: column; gap: 1.5rem; }
-header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+/* day header: the date centred, quiet chevrons either side; › hides on today */
+header { display: grid; grid-template-columns: 2.5rem 1fr 2.5rem; align-items: center; text-align: center; }
+header .ch { width: 2.5rem; height: 2.5rem; border: 0; background: none; color: var(--muted); font: 400 1.6rem/1 var(--body); opacity: .6; cursor: pointer; padding: 0; }
+header .ch:disabled { visibility: hidden; }
+header .ch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 50%; }
+.rel { font-size: .8rem; color: var(--muted); min-height: 0; }
+.rel:empty { display: none; }
 h1 { font-family: var(--display); font-weight: 700; font-size: 1.7rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
 .datebar { display: flex; align-items: center; gap: .35rem; }
 .datebar button { background: var(--surface); border: 1px solid var(--line); color: var(--ink); width: 2.25rem; height: 2.25rem; border-radius: 50%; font-size: 1.1rem; cursor: pointer; }
@@ -66,19 +72,41 @@ textarea { font: inherit; color: var(--ink); background: var(--surface); border:
 .status { font-size: .85rem; color: var(--muted); min-height: 1.2em; }
 h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0 0 .75rem; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; }
-/* the history never takes more than about half the screen; with many indicators it scrolls inside */
+/* trend card: page 0 is the two-week grid, then one bar chart per dial; swipe or use the arrows */
+.trend { padding: 16px 0 14px; position: relative; }
+.tt { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 16px 12px; min-height: 30px; }
+.tt .t1 { font: 500 .98rem var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tt .t1 em { font-style: normal; color: var(--muted); }
+.tt .t1 .sep { color: var(--muted); margin: 0 6px; }
+.tt .ctl { display: flex; flex: none; }
+.tt .ctl button { border: 0; background: none; color: var(--muted); font-size: 1.15rem; width: 28px; height: 30px; padding: 0; cursor: pointer; }
+.tt .ctl button:disabled { opacity: .2; cursor: default; }
+.tpages { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.tpages::-webkit-scrollbar { display: none; }
+.tpages > div { flex: 0 0 100%; scroll-snap-align: start; padding: 2px 16px; min-width: 0; }
+/* the grid never takes more than about half the screen; with many indicators it scrolls inside */
 .grid-wrap { max-height: calc(50vh - 7.5rem); overflow-y: auto; overflow-x: hidden; padding-right: 6px; margin-right: -6px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .grid-wrap::-webkit-scrollbar { width: 5px; }
 .grid-wrap::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
-.grid .hd, .grid .hd-sp { position: sticky; top: 0; background: var(--surface); z-index: 1; }
-.grid { display: grid; grid-template-columns: 5.2rem repeat(14, minmax(0, 1fr)) 2.4rem; gap: 4px; align-items: center; }
-.grid .av { font-family: var(--display); font-weight: 700; font-size: .9rem; text-align: center; font-variant-numeric: tabular-nums; border-radius: 6px; padding: .1rem 0; background: var(--c); }
-.grid .hd { font-size: .68rem; color: var(--muted); text-align: center; }
+.grid, .gaxis { display: grid; grid-template-columns: 4.6rem repeat(7, minmax(0, 1fr)) 2.1rem 10px repeat(7, minmax(0, 1fr)) 2.1rem; column-gap: 3px; }
+.grid { row-gap: 5px; align-items: center; }
+.gaxis { margin-top: 8px; font-size: .68rem; color: var(--muted); padding-right: 6px; margin-right: -6px; }
+.gaxis span { white-space: nowrap; text-align: center; }
+.grid .lbl { font-size: .86rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grid .av { font: 700 .88rem var(--display); text-align: center; font-variant-numeric: tabular-nums; border-radius: 6px; padding: 2px 0; background: var(--c); }
+.cell { aspect-ratio: 1; border-radius: 2px; background: var(--empty); max-width: 100%; border: 0; padding: 0; cursor: pointer; }
+.cell.sel, .tbar.sel { outline: 2px solid var(--ink); outline-offset: 1px; }
+.tchart .pt { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 6px; font-size: .78rem; color: var(--muted); }
+.tchart .pt b { font: 700 1.25rem var(--display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.tchart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tchart svg text { font: .62rem var(--body); fill: var(--muted); }
+.tbar { cursor: pointer; }
+.tbub { position: absolute; z-index: 5; background: var(--ink); color: var(--surface); border-radius: 9px; padding: 5px 9px; font-size: .76rem; line-height: 1.3; white-space: nowrap; pointer-events: none; transform: translate(-50%, -100%); }
+.tbub::after { content: ""; position: absolute; left: var(--ax, 50%); bottom: -5px; margin-left: -5px; border: 5px solid transparent; border-bottom: 0; border-top-color: var(--ink); }
+.tbub b { font-size: .88rem; }
 .wline { display: flex; justify-content: space-between; align-items: baseline; margin-top: .9rem; padding-top: .8rem; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted); }
 .wline b { white-space: nowrap; font-family: var(--display); font-size: 1.1rem; color: var(--ink); font-variant-numeric: tabular-nums; }
-.grid .lbl { font-size: .78rem; color: var(--muted); }
 .cell { aspect-ratio: 1; border-radius: 3px; background: var(--empty); max-width: 100%; }
-.ticks { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin: .4rem 2.65rem 0 5.45rem; font-variant-numeric: tabular-nums; }
 .avgs { display: block; }
 .avg { border-top: 3px solid var(--c); padding-top: .4rem; }
 .avg b { font-family: var(--display); font-size: 1.4rem; font-variant-numeric: tabular-nums; display: block; }
@@ -178,7 +206,6 @@ body.on-settings header { display: none; }
 .chips span, .chips button { font: 700 .75rem var(--body); padding: .4rem .7rem; border-radius: 14px; border: 1px solid var(--line); background: transparent; color: var(--muted); }
 .chips button { cursor: pointer; color: var(--ink); }
 .chips button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
-.grid .lbl, .avg span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hint { margin: 0; font-size: .85rem; color: var(--muted); overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) { .scale button, .bub, .bub-box { transition: none; } }
 </style>
@@ -186,20 +213,16 @@ body.on-settings header { display: none; }
 </head><body>
 <div class="wrap">
   <header>
-    <h1 id="dayLabel">Today</h1>
-    <div class="datebar">
-      <button id="prev" aria-label="Previous day">‹</button>
-      <button id="next" aria-label="Next day">›</button>
-    </div>
+    <button class="ch" id="prev" aria-label="Previous day">‹</button>
+    <div><h1 id="dayLabel">Today</h1><div class="rel" id="dayRel"></div></div>
+    <button class="ch" id="next" aria-label="Next day">›</button>
   </header>
 
   <div class="tab" id="tab-checkin" role="tabpanel" aria-labelledby="tb-checkin">
-  <section class="panel" aria-label="Last 2 weeks">
-    <h2>Last 2 weeks</h2>
-    <div class="grid-wrap"><div class="grid" id="grid"></div></div>
-    <div class="ticks" id="ticks"></div>
-    <div class="avgs" id="avgs"></div>
-    <p class="empty" id="emptyMsg">Your check-ins will fill this grid. Mint is a good day for that item, coral a bad one.</p>
+  <section class="panel trend" id="trend" aria-label="Trend">
+    <div class="tt"><span class="t1"><em>Trend</em><span class="sep">·</span><b id="trendName">All indicators</b></span>
+      <div class="ctl"><button id="tPrev" aria-label="Previous chart">‹</button><button id="tNext" aria-label="Next chart">›</button></div></div>
+    <div class="tpages" id="tPages"></div>
   </section>
 
   <section class="dials" id="dials" aria-label="Ratings"></section>
@@ -411,7 +434,9 @@ $("prev").onclick = () => { flush(); current = shift(current, -1); renderDay(); 
 $("next").onclick = () => { if (current < todayIso()) { flush(); current = shift(current, 1); renderDay(); } };
 
 function renderDay() {
-  $("dayLabel").textContent = label(current);
+  { const back = Math.round((md(todayIso()) - md(current)) / 864e5);   // the date up top; "Yesterday" / "3 days ago" under it when not today
+    $("dayLabel").textContent = longDay(current);
+    $("dayRel").textContent = back <= 0 ? "" : back === 1 ? "Yesterday" : `${back} days ago`; }
   $("next").disabled = current >= todayIso();
   const e = entries[current] || {};
   for (const m of METRICS) {
@@ -434,30 +459,93 @@ function renderDay() {
   $("note").classList.toggle("has-text", !!$("note").value);
 }
 
+let trendPage = 0;
+const md = s => { const [y, mo, d] = s.split("-").map(Number); return new Date(y, mo - 1, d); };
+const shortDay = s => md(s).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+const longDay = s => md(s).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 function renderHistory() {
   renderCharts();
   const t = todayIso();
   const days = Array.from({ length: 14 }, (_, i) => shift(t, i - 13));
-  const grid = $("grid"); grid.innerHTML = "";
-  const avg = (key, n) => { const vs = []; for (let i = 0; i < n; i++) { const v = entries[shift(t, -i)]?.[key]; if (has(v)) vs.push(v); } return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null; };
-  let any = false;
-  grid.insertAdjacentHTML("beforeend", `<div class="hd-sp"></div>${days.map(() => `<div class="hd-sp"></div>`).join("")}<div class="hd">7-day</div>`);
-  for (const m of METRICS.filter(isScale)) {
-    let row = `<div class="lbl">${esc(m.short || m.name)}</div>`;
-    for (const d of days) {
+  const scales = METRICS.filter(isScale);
+  const mean = (key, ds) => { const vs = ds.map(d => entries[d]?.[key]).filter(has); return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null; };
+  const pill = (m, a) => `<div class="av" style="--c:${a == null ? "var(--empty)" : colour(goodness(m, a))}">${a == null ? "–" : a.toFixed(1)}</div>`;
+  let any = false, grid = "";
+  for (const m of scales) {
+    grid += `<div class="lbl">${esc(m.short || m.name)}</div>`;
+    days.forEach((d, j) => {
+      if (j === 7) grid += pill(m, mean(m.key, days.slice(0, 7))) + `<div></div>`;
       const v = entries[d]?.[m.key];
       if (has(v)) any = true;
-      row += `<div class="cell" title="${esc(label(d))} — ${esc(m.name)}: ${v ?? "—"}"${has(v) ? ` style="background:${colour(goodness(m, v))}"` : ""}></div>`;
-    }
-    const a = avg(m.key, 7);
-    row += `<div class="av" style="--c:${a == null ? "var(--empty)" : colour(goodness(m, a))}">${a == null ? "–" : a.toFixed(1)}</div>`;
-    grid.insertAdjacentHTML("beforeend", row);
+      grid += `<button class="cell" data-k="${m.key}" data-d="${d}" aria-label="${esc(m.name)}, ${esc(longDay(d))}: ${has(v) ? v : "no entry"}"${has(v) ? ` style="background:${colour(goodness(m, v))}"` : ""}></button>`;
+    });
+    grid += pill(m, mean(m.key, days.slice(7)));
   }
-  const fmt = s => { const [y,mo,d] = s.split("-").map(Number); return new Date(y, mo-1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" }); };
-  $("ticks").innerHTML = `<span>${fmt(days[0])}</span><span>${fmt(days[7])}</span><span>Today</span>`;
-  $("emptyMsg").hidden = any;
-  $("avgs").innerHTML = "";   // numbers like weight have their own tab now
+  const wk = (a, b) => `${shortDay(a)} – ${md(b).getDate()}`;
+  const page0 = `<div><div class="grid-wrap"><div class="grid">${grid}</div></div>
+    <div class="gaxis"><span></span><span style="grid-column:span 7">${wk(days[0], days[6])}</span><span>avg</span><span></span><span style="grid-column:span 7">${wk(days[7], days[13])}</span><span>avg</span></div>
+    ${any ? "" : `<p class="empty">Your check-ins will fill this grid. Green is a good day for that item, coral a bad one.</p>`}</div>`;
+  const charts = scales.map(m => {
+    const a = mean(m.key, days);
+    return `<div class="tchart"><div class="pt"><span>${m.high ? "0 bad · 5 good" : "0 none · 5 max"}</span><span><b>${a == null ? "–" : a.toFixed(1)}</b> avg</span></div>${trendBars(m, days)}</div>`;
+  });
+  const pg = $("tPages");
+  pg.innerHTML = page0 + charts.join("");
+  pg._names = ["All indicators", ...scales.map(m => m.name)];
+  trendPage = Math.min(trendPage, pg._names.length - 1);
+  pg.style.scrollBehavior = "auto"; pg.scrollLeft = trendPage * pg.clientWidth; pg.style.scrollBehavior = "";
+  trendSync(true);
 }
+function trendBars(m, days) {
+  const W = 340, H = 140, L = 16, B = 18, T = 6, n = days.length, bw = (W - L) / n, Y = v => T + (5 - v) / 5 * (H - T - B);
+  let g = "";
+  for (let v = 0; v <= 5; v++) { g += `<line x1="${L}" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="${v ? .6 : 1}"/>`; if (v === 0 || v === 5) g += `<text x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${v}</text>`; }
+  days.forEach((d, i) => {
+    const v = entries[d]?.[m.key], x = L + i * bw + bw * .15, w = bw * .7;
+    if (!has(v)) { g += `<rect x="${x}" y="${H - B - 2}" width="${w}" height="2" rx="1" fill="var(--empty)"/>`; return; }
+    const hh = Math.max(3, H - B - Y(v));
+    g += `<rect class="tbar" data-k="${m.key}" data-d="${d}" x="${x}" y="${H - B - hh}" width="${w}" height="${hh}" rx="4" fill="${colour(goodness(m, v))}"/>`;
+  });
+  const vs = days.map(d => entries[d]?.[m.key]).filter(has);
+  if (vs.length) { const ya = Y(vs.reduce((a, b) => a + b, 0) / vs.length); g += `<line x1="${L}" x2="${W}" y1="${ya}" y2="${ya}" stroke="var(--ink)" stroke-width="1.2" stroke-dasharray="3 3" opacity=".6"/>`; }
+  [0, 7, n - 1].forEach(i => g += `<text x="${L + i * bw + bw / 2}" y="${H - 4}" text-anchor="${i === 0 ? "start" : i === n - 1 ? "end" : "middle"}">${shortDay(days[i])}</text>`);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(m.name)}, last 14 days">${g}</svg>`;
+}
+// which page is showing → title and arrows
+function trendSync(force) {
+  const pg = $("tPages"); if (!pg._names) return;
+  const i = pg.clientWidth ? Math.round(pg.scrollLeft / pg.clientWidth) : trendPage;
+  if (i === trendPage && !force) return;
+  if (i !== trendPage) trendBubble(null);
+  trendPage = i;
+  $("trendName").textContent = pg._names[i] || "";
+  $("tPrev").disabled = i === 0; $("tNext").disabled = i >= pg._names.length - 1;
+}
+const trendGo = i => { const pg = $("tPages"); i = Math.max(0, Math.min(pg._names.length - 1, i)); pg.scrollTo({ left: i * pg.clientWidth, behavior: "smooth" }); };
+$("tPrev").onclick = () => trendGo(trendPage - 1);
+$("tNext").onclick = () => trendGo(trendPage + 1);
+{ let tm; $("tPages").addEventListener("scroll", () => { clearTimeout(tm); tm = setTimeout(() => trendSync(false), 90); }); }
+// tap a square or a bar → a small bubble with the day and value; tap again or elsewhere to close
+let tbub = null, tsel = null;
+function trendBubble(t) {
+  if (tbub) tbub.remove(); if (tsel) tsel.classList.remove("sel"); tbub = tsel = null;
+  if (!t) return;
+  const m = METRICS.find(x => x.key === t.dataset.k), d = t.dataset.d, v = entries[d]?.[m.key];
+  const word = !has(v) ? "" : v === 0 ? (m.high ? " · Bad" : " · None") : v === 5 ? (m.high ? " · Good" : " · Max") : "";
+  const card = $("trend"); tsel = t; t.classList.add("sel");
+  tbub = document.createElement("div"); tbub.className = "tbub";
+  tbub.innerHTML = `${esc(longDay(d))}<br><b>${esc(m.name)} ${has(v) ? v + word : "– no entry"}</b>`;
+  card.append(tbub);
+  const cr = t.getBoundingClientRect(), pr = card.getBoundingClientRect(), want = cr.left - pr.left + cr.width / 2, half = tbub.offsetWidth / 2;
+  const x = Math.max(half + 4, Math.min(pr.width - half - 4, want));
+  tbub.style.left = x + "px"; tbub.style.top = (cr.top - pr.top - 6) + "px";
+  tbub.style.setProperty("--ax", (50 + (want - x) / tbub.offsetWidth * 100) + "%");
+}
+$("trend").addEventListener("click", e => {
+  const t = e.target.closest(".cell, .tbar"); if (!t) return;
+  trendBubble(t === tsel ? null : t);
+});
+document.addEventListener("click", e => { if (tbub && !$("trend").contains(e.target)) trendBubble(null); });
 
 // ---- tabs
 let currentTab = "checkin";
@@ -468,6 +556,7 @@ function showTab(name) {
     $(`tb-${t}`).setAttribute("aria-selected", String(t === name));
   }
   document.body.classList.toggle("on-settings", name === "settings");
+  if (name === "checkin") { const pg = $("tPages"); pg.style.scrollBehavior = "auto"; pg.scrollLeft = trendPage * pg.clientWidth; pg.style.scrollBehavior = ""; }
   window.scrollTo(0, 0);
   try { localStorage.setItem("dailydials.tab", name); } catch {}
   if (name === "weight") { renderDay(); renderCharts(); }
