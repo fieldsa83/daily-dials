@@ -127,6 +127,11 @@ footer { font-size: .78rem; color: var(--muted); }
 .tabs button svg { width: 22px; height: 22px; flex: none; }
 .tabs button span { display: none; }
 .tabs button[aria-selected="true"] { background: color-mix(in srgb, var(--good) 40%, var(--surface)); color: var(--ink); }
+/* the weight tab and its dial use the chart's light blue */
+#tb-weight[aria-selected="true"] { background: #b9d3ea; color: #1f2c3a; }
+#ru-weight .needle { background: #3a6f9f; }
+#ru-weight .bub { --bub: color-mix(in srgb, #b9d3ea 50%, var(--surface)); }
+#ru-weight .bub.set { --bub: #b9d3ea; }
 .tabs button[aria-selected="true"] span { display: inline; }
 .tabs button[hidden] { display: none; }
 .wrap { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
