@@ -173,6 +173,14 @@ body.on-settings header { display: none; }
   </header>
 
   <div class="tab" id="tab-checkin" role="tabpanel" aria-labelledby="tb-checkin">
+  <section class="panel" aria-label="Last 2 weeks">
+    <h2>Last 2 weeks</h2>
+    <div class="grid-wrap"><div class="grid" id="grid"></div></div>
+    <div class="ticks" id="ticks"></div>
+    <div class="avgs" id="avgs"></div>
+    <p class="empty" id="emptyMsg">Your check-ins will fill this grid. Mint is a good day for that item, coral a bad one.</p>
+  </section>
+
   <section class="dials" id="dials" aria-label="Ratings"></section>
 
   <div class="note">
@@ -180,18 +188,11 @@ body.on-settings header { display: none; }
     <div class="status" id="status" role="status"></div>
   </div>
 
-  <section class="panel" aria-label="Last 28 days">
-    <h2>Last 2 weeks</h2>
-    <div class="grid-wrap"><div class="grid" id="grid"></div></div>
-    <div class="ticks" id="ticks"></div>
-    <div class="avgs" id="avgs"></div>
-    <p class="empty" id="emptyMsg">Your check-ins will fill this grid. Mint is a good day for that item, coral a bad one.</p>
-  </section>
   </div>
 
   <div class="tab" id="tab-weight" role="tabpanel" aria-labelledby="tb-weight" hidden>
-    <section class="dials" id="numDials" aria-label="Numbers"></section>
     <div id="charts"></div>
+    <section class="dials" id="numDials" aria-label="Numbers"></section>
   </div>
 
   <div class="tab" id="tab-settings" role="tabpanel" aria-labelledby="tb-settings" hidden>
@@ -530,7 +531,7 @@ function renderChart(m) {
   if (hi - lo < 2) { const c = (hi + lo) / 2; lo = c - 1; hi = c + 1; }
   const step = [0.5, 1, 2, 5, 10, 20].find(s => (hi - lo) / s <= 5) || 50;
   lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
-  const W = cv.clientWidth || 340, H = 230, L = 36, R = 8, T = 10, B = 24;
+  const W = cv.clientWidth || 340, H = 190, L = 36, R = 8, T = 10, B = 24;
   const X = t => L + (t - start) / (end - start) * (W - L - R), Y = v => T + (hi - v) / (hi - lo) * (H - T - B);
   let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(m.name)} chart"><defs><clipPath id="cp-${m.key}"><rect x="${L}" y="0" width="${W - L - R}" height="${H}"/></clipPath></defs>`;
   for (let v = lo; v <= hi + 1e-9; v += step) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text class="ax" x="${L - 6}" y="${Y(v) + 3.5}" text-anchor="end">${+v.toFixed(1)}</text>`;
