@@ -319,8 +319,8 @@ function buildDials() {
     el.className = "dial";
     if (isScale(m)) {
       el.style.setProperty("--n", 6);
-      // end labels follow "high is good": Bad → Good (mood, sleep…), or None → Bad for pain-type dials
-      const word = n => n === 0 ? `<small>${m.high ? "Bad" : "None"}</small>` : n === 5 ? `<small>${m.high ? "Good" : "Bad"}</small>` : "";
+      // end labels follow "high is good": Bad → Good (mood, sleep…), or None → Max for pain-type dials
+      const word = n => n === 0 ? `<small>${m.high ? "Bad" : "None"}</small>` : n === 5 ? `<small>${m.high ? "Good" : "Max"}</small>` : "";
       el.innerHTML = `<div class="dial-head"><span class="dial-name">${esc(m.name)}</span></div>
         <div class="scale" id="s-${m.key}" role="group" aria-label="${esc(m.name)}, 0 to 5">${SCALE.map(n => `<button id="b-${m.key}-${n}" data-k="${m.key}" data-n="${n}" aria-pressed="false" style="--b:${colour(goodness(m, n))}"><span>${n}</span>${word(n)}</button>`).join("")}</div>`;
     } else {
