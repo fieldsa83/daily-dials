@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg">#EEF1F2</color>
+    <color name="bg">#EBDFD2</color>
     <color name="icon_bg">#1A232A</color>
-    <color name="mood_ink">#14191D</color>
+    <color name="mood_ink">#3A2D24</color>
 </resources>

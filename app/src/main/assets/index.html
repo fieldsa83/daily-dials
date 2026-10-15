@@ -5,23 +5,27 @@
 <style>
 /* Layout: one narrow column — today's four dials, then a 28-day grid and weekly averages */
 :root {
-  --bg: #eef1f2;
-  --surface: #ffffff;
-  --ink: #18222b;
-  --muted: #5d6b76;
-  --line: #d5dde1;
-  --accent: #1d5f6b;
+  /* "Mocha light": warm light-brown background, cream cards, cocoa text, earthy buttons */
+  --bg: #ebdfd2;
+  --surface: #faf5ef;
+  --ink: #3a2d24;
+  --muted: #7a6a5e;
+  --line: #ddd0c1;
+  --accent: #6b4f3f;
+  --good: #94bb8b;          /* the green used for the weight bubble and the chart */
+  --good-deep: #71a993;
+  --warn: #c0705c;          /* the target line */
   --pain: #c2543a;
   --activity: #2f7d4f;
   --anxiety: #7a55b0;
   --mood: #c08a17;
   --sleep: #3b6fb6;
   --other: #b0476e;
-  --empty: #e2e8eb;
+  --empty: #e6d9cb;
   --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --body: "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
 }
-/* Always the light "Candy" look, even when the phone is in dark mode. data-theme="dark" on <html> would switch it. */
+/* Always this light look, even when the phone is in dark mode. data-theme="dark" on <html> would switch it. */
 :root { color-scheme: light; }
 :root[data-theme="dark"] {
 
@@ -43,15 +47,15 @@ h1 { font-family: var(--display); font-weight: 700; font-size: 1.7rem; margin: 0
 .dial-name { font-family: var(--display); font-weight: 500; font-size: 1.15rem; }
 .dial-val { font-size: .85rem; color: var(--muted); }
 .scale { display: grid; grid-template-columns: repeat(var(--n, 5), 1fr); gap: .5rem; }
-/* solid Candy buttons; once one is picked it lifts and the others shrink back */
+/* solid colour buttons; once one is picked it lifts and the others shrink back */
 .scale button {
   font: 700 1.15rem var(--body); font-variant-numeric: tabular-nums; height: 3.4rem; border-radius: 12px; border: 0; padding: 0 2px;
-  background: var(--b); color: #18222b; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: var(--b); color: var(--ink); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   transition: transform .15s, opacity .15s, box-shadow .15s;
 }
-.scale button small { font: 400 .62rem/1.05 var(--body); color: #2b363e; }
+.scale button small { font: 400 .62rem/1.05 var(--body); color: var(--ink); opacity: .8; }
 .scale.picked button { opacity: .55; transform: scale(.9); }
-.scale.picked button[aria-pressed="true"] { opacity: 1; transform: translateY(-3px) scale(1.06); box-shadow: 0 6px 14px rgba(24, 34, 43, .28); }
+.scale.picked button[aria-pressed="true"] { opacity: 1; transform: translateY(-3px) scale(1.06); box-shadow: 0 6px 14px rgba(60, 40, 30, .25); }
 .scale button:focus-visible, .datebar button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .note { display: flex; flex-direction: column; gap: .4rem; }
 .note label { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
@@ -100,22 +104,23 @@ footer { font-size: .78rem; color: var(--muted); }
 .rul:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
 .tk { position: absolute; top: 66px; border-radius: 2px; }
 .tl { position: absolute; top: 104px; width: 40px; margin-left: -20px; text-align: center; font-size: .75rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
-.needle { position: absolute; left: 50%; top: 58px; width: 4px; height: 52px; margin-left: -2px; border-radius: 2px; background: #69db7c; z-index: 1; }
-.bub { position: absolute; left: 50%; top: 2px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 2; transition: transform .15s; --bub: color-mix(in srgb, #69db7c 45%, var(--surface)); }
-.bub.set { transform: translateX(-50%) translateY(-2px); --bub: #69db7c; }
+.needle { position: absolute; left: 50%; top: 58px; width: 4px; height: 52px; margin-left: -2px; border-radius: 2px; background: var(--good); z-index: 1; }
+.bub { position: absolute; left: 50%; top: 2px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 2; transition: transform .15s; --bub: color-mix(in srgb, var(--good) 45%, var(--surface)); }
+.bub.set { transform: translateX(-50%) translateY(-2px); --bub: var(--good); }
 .bub-box { height: 46px; box-sizing: border-box; padding: 7px 16px 0; border-radius: 14px; display: flex; align-items: baseline; gap: .25rem; background: var(--bub);
   font: 700 1.5rem var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; transition: box-shadow .15s, background .15s; }
-.bub.set .bub-box { box-shadow: 0 6px 14px rgba(24, 34, 43, .25); }
-.bub-box span { font: 400 .8rem var(--body); color: #3d4a54; }
+.bub.set .bub-box { box-shadow: 0 6px 14px rgba(60, 40, 30, .22); }
+.bub-box span { font: 400 .8rem var(--body); color: var(--muted); }
 .bub i { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid var(--bub); }
 /* tabs */
-/* tab bar along the bottom, within thumb reach */
-.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; justify-content: center; gap: 4px;
-  padding: 6px 12px calc(6px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -2px 10px rgba(24, 34, 43, .06); }
-.tabs button { flex: 1; max-width: 11rem; min-height: 56px; border: 0; border-radius: 14px; background: transparent; color: var(--muted); font: 700 .78rem var(--body); cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
-.tabs button svg { width: 24px; height: 24px; }
-.tabs button[aria-selected="true"] { color: var(--ink); background: color-mix(in srgb, #69db7c 30%, var(--surface)); }
+/* tab bar: a floating pill near the bottom, within thumb reach; every tab the same width */
+.tabs { position: fixed; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); margin: 0 auto; width: max-content; z-index: 10; display: flex; gap: 4px;
+  padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 26px; box-shadow: 0 10px 28px rgba(60, 40, 30, .16); }
+.tabs button { flex: none; width: 96px; min-height: 52px; border: 0; border-radius: 20px; background: transparent; color: var(--muted); font: 700 .75rem var(--body); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; transition: background .15s, color .15s; }
+.tabs button svg { width: 22px; height: 22px; }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--surface); }
+.tabs button[hidden] { display: none; }
 .wrap { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
 body.on-settings header { display: none; }
 .settings h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0; }
@@ -241,8 +246,8 @@ body.on-settings header { display: none; }
 // kind "scale" = a 0–5 dial; kind "number" = a ruler with one decimal (weight). "hidden" = removed.
 let INDICATORS = [];
 let METRICS = [];   // the visible ones, in order
-// Candy: one fixed colour per step, worst → best (no blending, so no muddy in-betweens)
-const STOPS = ["#ff6b6b", "#ff922b", "#ffd43b", "#b2f2bb", "#69db7c", "#20c997"];
+// one fixed colour per step, worst → best (no blending, so no muddy in-betweens)
+const STOPS = ["#d98d7c", "#dfa877", "#dbc27b", "#bccf99", "#94bb8b", "#71a993"];   // terracotta → sage → teal
 function goodness(m, v) { const t = v / 5; return m.high ? t : 1 - t; }
 function colour(g) {
   return STOPS[Math.round(Math.max(0, Math.min(1, g)) * (STOPS.length - 1))];
@@ -314,7 +319,7 @@ function drawRuler(m, t, set) {
   for (let v = t - span; v <= t + span; v++) {
     if (v < 0) continue;
     const x = c + (v - t) * PX, major = v % 10 === 0, half = v % 5 === 0;
-    html += `<div class="tk" style="left:${x - (major ? 1.5 : 1)}px;width:${major ? 3 : 2}px;height:${major ? 30 : half ? 22 : 14}px;background:${major ? "var(--ink)" : "#9aa6ae"}"></div>`;
+    html += `<div class="tk" style="left:${x - (major ? 1.5 : 1)}px;width:${major ? 3 : 2}px;height:${major ? 30 : half ? 22 : 14}px;background:${major ? "var(--ink)" : "color-mix(in srgb, var(--muted) 60%, transparent)"}"></div>`;
     if (major) html += `<div class="tl" style="left:${x}px">${v / 10}</div>`;
   }
   html += `<div class="needle"></div><div class="bub${set ? " set" : ""}"><div class="bub-box">${(t / 10).toFixed(1)}<span>${esc(m.unit || "")}</span></div><i></i></div>`;
@@ -542,9 +547,9 @@ function renderChart(m) {
   }
   svg += `<g clip-path="url(#cp-${m.key})">`;
   const r = visD.length > 400 ? 1.6 : visD.length > 120 ? 2.2 : 3;
-  for (const [t, v] of visD) svg += `<circle cx="${X(t).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${r}" fill="#b2f2bb" stroke="#2f9e44" stroke-width=".8" opacity=".75"/>`;
-  if (visL.length) svg += `<polyline fill="none" stroke="#1d5f6b" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${visL.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ")}"/>`;
-  if (m.target != null) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(m.target)}" y2="${Y(m.target)}" stroke="#c2543a" stroke-width="1.5" stroke-dasharray="4 4"/><text class="ax" x="${W - R - 2}" y="${Y(m.target) - 5}" text-anchor="end" style="fill:#c2543a">Target ${m.target}</text>`;
+  for (const [t, v] of visD) svg += `<circle cx="${X(t).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${r}" fill="#cfdcb4" stroke="#71a993" stroke-width=".8" opacity=".8"/>`;
+  if (visL.length) svg += `<polyline fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${visL.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ")}"/>`;
+  if (m.target != null) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(m.target)}" y2="${Y(m.target)}" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="4 4"/><text class="ax" x="${W - R - 2}" y="${Y(m.target) - 5}" text-anchor="end" style="fill:var(--warn)">Target ${m.target}</text>`;
   svg += `<line class="tipline" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--ink)" stroke-width="1" opacity=".35" style="display:none"/></g></svg>`;
   cv.innerHTML = svg;
   cv._state = { line: visL.filter(p => p[0] >= start), X, view: CH.view };
