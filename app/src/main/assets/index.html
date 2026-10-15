@@ -42,8 +42,6 @@ header { display: grid; grid-template-columns: 2.5rem 1fr 2.5rem; align-items: c
 header .ch { width: 2.5rem; height: 2.5rem; border: 0; background: none; color: var(--muted); font: 400 1.6rem/1 var(--body); opacity: .6; cursor: pointer; padding: 0; }
 header .ch:disabled { visibility: hidden; }
 header .ch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 50%; }
-.rel { font-size: .8rem; color: var(--muted); min-height: 0; }
-.rel:empty { display: none; }
 h1 { font-family: var(--display); font-weight: 700; font-size: 1.7rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
 .datebar { display: flex; align-items: center; gap: .35rem; }
 .datebar button { background: var(--surface); border: 1px solid var(--line); color: var(--ink); width: 2.25rem; height: 2.25rem; border-radius: 50%; font-size: 1.1rem; cursor: pointer; }
@@ -214,7 +212,7 @@ body.on-settings header { display: none; }
 <div class="wrap">
   <header>
     <button class="ch" id="prev" aria-label="Previous day">‹</button>
-    <div><h1 id="dayLabel">Today</h1><div class="rel" id="dayRel"></div></div>
+    <h1 id="dayLabel">Today</h1>
     <button class="ch" id="next" aria-label="Next day">›</button>
   </header>
 
@@ -434,9 +432,7 @@ $("prev").onclick = () => { flush(); current = shift(current, -1); renderDay(); 
 $("next").onclick = () => { if (current < todayIso()) { flush(); current = shift(current, 1); renderDay(); } };
 
 function renderDay() {
-  { const back = Math.round((md(todayIso()) - md(current)) / 864e5);   // the date up top; "Yesterday" / "3 days ago" under it when not today
-    $("dayLabel").textContent = longDay(current);
-    $("dayRel").textContent = back <= 0 ? "" : back === 1 ? "Yesterday" : `${back} days ago`; }
+  $("dayLabel").textContent = longDay(current);
   $("next").disabled = current >= todayIso();
   const e = entries[current] || {};
   for (const m of METRICS) {
