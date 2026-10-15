@@ -1,0 +1,580 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Daily Dials Check-in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one narrow column — today's four dials, then a 28-day grid and weekly averages */
+:root {
+  --bg: #eef1f2;
+  --surface: #ffffff;
+  --ink: #18222b;
+  --muted: #5d6b76;
+  --line: #d5dde1;
+  --accent: #1d5f6b;
+  --pain: #c2543a;
+  --activity: #2f7d4f;
+  --anxiety: #7a55b0;
+  --mood: #c08a17;
+  --sleep: #3b6fb6;
+  --other: #b0476e;
+  --empty: #e2e8eb;
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11181d; --surface: #1a232a; --ink: #e6ecef; --muted: #93a2ad; --line: #2c3a43;
+    --accent: #6fb7c2; --pain: #e47a5f; --activity: #5cbf83; --anxiety: #a888d8; --mood: #e2b44a; --sleep: #7fa6e0; --other: #e07ba0;
+    --empty: #24313a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11181d; --surface: #1a232a; --ink: #e6ecef; --muted: #93a2ad; --line: #2c3a43;
+  --accent: #6fb7c2; --pain: #e47a5f; --activity: #5cbf83; --anxiety: #a888d8; --mood: #e2b44a; --sleep: #7fa6e0; --other: #e07ba0;
+  --empty: #24313a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; -webkit-tap-highlight-color: transparent; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; }
+.wrap { max-width: 34rem; margin: 0 auto; padding: 1.25rem 16px 3rem; display: flex; flex-direction: column; gap: 1.5rem; }
+header { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 1.7rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.datebar { display: flex; align-items: center; gap: .35rem; }
+.datebar button { background: var(--surface); border: 1px solid var(--line); color: var(--ink); width: 2.25rem; height: 2.25rem; border-radius: 50%; font-size: 1.1rem; cursor: pointer; }
+.datebar button:disabled { opacity: .35; cursor: default; }
+.datebar .day { font-weight: 700; min-width: 7.5rem; text-align: center; font-variant-numeric: tabular-nums; }
+.dials { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: .25rem 1rem; }
+.dial { padding: 1rem 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: .55rem; }
+.dial:last-child { border-bottom: 0; }
+.dial-head { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+.dial-name { font-family: var(--display); font-weight: 500; font-size: 1.15rem; }
+.dial-val { font-size: .85rem; color: var(--muted); }
+.scale { display: grid; grid-template-columns: repeat(var(--n, 5), 1fr); gap: .6rem; padding: 6px; margin: -6px; }
+.scale button {
+  font: 700 1.15rem var(--body); font-variant-numeric: tabular-nums; height: 3rem; border-radius: 10px;
+  border: 2px solid var(--b); background: color-mix(in srgb, var(--b) 28%, var(--bg)); color: var(--ink); cursor: pointer; transition: transform .08s, box-shadow .08s;
+}
+.scale button:active { transform: scale(.95); }
+.scale button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--ink); font-size: 1.3rem; }
+.scale button:focus-visible, .datebar button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.anchors { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.note { display: flex; flex-direction: column; gap: .4rem; }
+.note label { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+textarea { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: .6rem .75rem; min-height: 3.2rem; resize: vertical; }
+.status { font-size: .85rem; color: var(--muted); min-height: 1.2em; }
+h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0 0 .75rem; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; }
+.grid-wrap { overflow-x: auto; }
+.grid { display: grid; grid-template-columns: 4.6rem repeat(28, minmax(.6rem, 1fr)); gap: 3px; align-items: center; min-width: 20rem; }
+.grid .lbl { font-size: .78rem; color: var(--muted); }
+.cell { aspect-ratio: 1; border-radius: 2px; background: var(--empty); max-width: 100%; }
+.ticks { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin: .35rem 0 0 4.9rem; font-variant-numeric: tabular-nums; }
+.avgs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: 1rem; }
+.avg { border-top: 3px solid var(--c); padding-top: .4rem; }
+.avg b { font-family: var(--display); font-size: 1.4rem; font-variant-numeric: tabular-nums; display: block; }
+.avg span { font-size: .75rem; color: var(--muted); }
+.avg small { font-size: .72rem; color: var(--muted); display: block; }
+.empty { color: var(--muted); font-size: .9rem; margin: .75rem 0 0; }
+footer { font-size: .78rem; color: var(--muted); }
+.settings summary { font-family: var(--display); font-weight: 500; font-size: 1.05rem; cursor: pointer; }
+.set-body { display: flex; flex-direction: column; gap: .9rem; margin-top: 1rem; }
+.field { display: flex; flex-direction: column; gap: .35rem; }
+.field span { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.field input { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: .6rem .75rem; min-width: 0; }
+.row { display: flex; gap: .5rem; flex-wrap: wrap; }
+.btn { font: 700 .95rem var(--body); padding: .65rem 1rem; border-radius: 10px; border: 1px solid var(--ink); background: var(--ink); color: var(--surface); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.group { display: flex; flex-direction: column; gap: .6rem; border: 1px solid var(--line); border-radius: 12px; padding: .8rem .9rem; margin: 0; }
+.group legend { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 0 .3rem; }
+.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .3rem; }
+.days button, .seg button { font: 700 .9rem var(--body); min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.days button[aria-pressed="true"], .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .3rem; }
+.check { display: flex; align-items: center; gap: .6rem; min-height: 44px; }
+.check input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; flex: none; }
+.check input[type=time] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: .4rem .6rem; margin-left: auto; }
+/* number dial (weight): a ruler you drag sideways; each small tick is 0.1 */
+.readout { text-align: center; font-family: var(--display); font-variant-numeric: tabular-nums; }
+.readout b { font-size: 2.8rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.readout span { font-size: 1rem; color: var(--muted); margin-left: .3rem; }
+.readout.unset b { color: var(--muted); }
+.ruler { position: relative; height: 78px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; touch-action: pan-x; cursor: ew-resize;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); }
+.ruler::-webkit-scrollbar { display: none; }
+.ruler-track { position: relative; height: 78px; margin: 0 50%;
+  background-image: linear-gradient(90deg, var(--ink) 0 3px, transparent 3px), linear-gradient(90deg, var(--muted) 0 2px, transparent 2px), linear-gradient(90deg, var(--muted) 0 1.5px, transparent 1.5px);
+  background-size: 120px 44px, 60px 32px, 12px 20px; background-repeat: repeat-x; opacity: .85; }
+.ruler-track span { position: absolute; top: 52px; width: 40px; margin-left: -19px; text-align: center; font-size: .8rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ruler-wrap { position: relative; }
+.ruler-wrap::after { content: ""; position: absolute; left: 50%; top: -4px; width: 4px; height: 52px; margin-left: -1px; border-radius: 2px; background: #20c997; pointer-events: none; }
+.nudges { display: flex; justify-content: center; gap: .5rem; flex-wrap: wrap; }
+.nudges button { font: 700 .9rem var(--body); min-height: 44px; min-width: 4rem; padding: 0 .9rem; border-radius: 22px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+/* indicator editor */
+.ind { display: flex; flex-direction: column; gap: .4rem; padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.ind:last-child { border-bottom: 0; }
+.ind-top { display: flex; align-items: center; gap: .25rem; }
+.ind-top input { flex: 1; min-width: 0; font: 700 1rem var(--body); color: var(--ink); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: .4rem; }
+.ind-top input:focus { border-color: var(--line); background: var(--bg); outline: none; }
+.ind-top button { width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+.ind-top button.rm { color: var(--pain); }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; padding-left: .4rem; }
+.chips span, .chips button { font: 700 .75rem var(--body); padding: .4rem .7rem; border-radius: 14px; border: 1px solid var(--line); background: transparent; color: var(--muted); }
+.chips button { cursor: pointer; color: var(--ink); }
+.chips button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.grid .lbl, .avg span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hint { margin: 0; font-size: .85rem; color: var(--muted); overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .scale button { transition: none; } }
+</style>
+
+</head><body>
+<div class="wrap">
+  <header>
+    <h1>Daily check-in</h1>
+    <div class="datebar">
+      <button id="prev" aria-label="Previous day">‹</button>
+      <span class="day" id="dayLabel">Today</span>
+      <button id="next" aria-label="Next day">›</button>
+    </div>
+  </header>
+
+  <section class="dials" id="dials" aria-label="Ratings"></section>
+
+  <div class="note">
+    <label for="note">Note (optional)</label>
+    <textarea id="note" placeholder="Anything worth remembering about today"></textarea>
+    <div class="status" id="status" role="status"></div>
+  </div>
+
+  <section class="panel" aria-label="Last 28 days">
+    <h2>Last 28 days</h2>
+    <div class="grid-wrap"><div class="grid" id="grid"></div></div>
+    <div class="ticks" id="ticks"></div>
+    <div class="avgs" id="avgs"></div>
+    <p class="empty" id="emptyMsg">Your check-ins will fill this grid. Mint squares are good days for that item, coral are bad, yellow is in between.</p>
+  </section>
+
+  <details class="panel settings" id="indicators">
+    <summary>Indicators</summary>
+    <div class="set-body">
+      <p class="hint">Rename by typing. Arrows change the order here and in the notification. Removing hides an indicator; its past values stay in the sheet.</p>
+      <div id="indList"></div>
+      <div id="indRemoved"></div>
+      <fieldset class="group">
+        <legend>Add an indicator</legend>
+        <label class="field"><span>Name</span><input id="newName" placeholder="Nutrition — did I eat healthy?" autocomplete="off"></label>
+        <div class="seg" id="newKind" role="group" aria-label="Kind" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+          <button data-v="scale" aria-pressed="true">0–5 dial</button><button data-v="number" aria-pressed="false">Number (like weight)</button>
+        </div>
+        <div class="row"><button class="btn" id="addInd">Add</button></div>
+      </fieldset>
+    </div>
+  </details>
+
+  <details class="panel settings" id="settings">
+    <summary>Settings &amp; sync</summary>
+    <div class="set-body">
+      <fieldset class="group">
+        <legend>Reminder</legend>
+        <label class="field"><span>Remind me at</span><input type="time" id="remTime" value="19:00"></label>
+        <div class="days" id="days" role="group" aria-label="Days">
+          <button data-bit="0" aria-label="Monday">M</button><button data-bit="1" aria-label="Tuesday">T</button><button data-bit="2" aria-label="Wednesday">W</button><button data-bit="3" aria-label="Thursday">T</button><button data-bit="4" aria-label="Friday">F</button><button data-bit="5" aria-label="Saturday">S</button><button data-bit="6" aria-label="Sunday">S</button>
+        </div>
+        <div class="check"><input type="checkbox" id="weekendOn"><label for="weekendOn">Different time on weekends</label><input type="time" id="weekendTime" value="10:00" aria-label="Weekend reminder time"></div>
+        <label class="check"><input type="checkbox" id="nudge" checked>Nudge again 2 hours later if I haven't answered</label>
+        <div class="seg" id="alert" role="group" aria-label="Alert style">
+          <button data-v="silent">Silent</button><button data-v="vibrate">Vibrate</button><button data-v="sound">Sound</button>
+        </div>
+        <div class="row" id="pauseRow"><button class="btn ghost" data-days="3">Pause 3 days</button><button class="btn ghost" data-days="7">Pause 1 week</button><button class="btn ghost" data-days="-1">Pause until I turn it on</button><button class="btn ghost" data-days="0" id="resume">Resume</button></div>
+        <p class="hint" id="nextRem"></p>
+      </fieldset>
+      <label class="field"><span>Google Sheet link</span><input type="url" id="sheetUrl" placeholder="https://script.google.com/macros/s/…/exec?token=…" autocomplete="off"></label>
+      <div class="row"><button class="btn" id="saveSettings">Save settings</button><button class="btn ghost" id="syncNow">Sync now</button><button class="btn ghost" id="testRem">Show test reminder</button></div>
+      <p class="hint" id="syncStatus">Not connected to a sheet yet. Entries are saved on this phone.</p>
+      <label class="field"><span>Import entries</span><textarea id="importBox" placeholder="Paste entries copied from the old Daily Dials page"></textarea></label>
+      <div class="row"><button class="btn ghost" id="doImport">Import</button></div>
+    </div>
+  </details>
+</div>
+<script>
+// The indicators come from assets/indicators.json, or the edited copy the app keeps (see "Indicators" panel).
+// kind "scale" = a 0–5 dial; kind "number" = a ruler with one decimal (weight). "hidden" = removed.
+let INDICATORS = [];
+let METRICS = [];   // the visible ones, in order
+// Candy: one fixed colour per step, worst → best (no blending, so no muddy in-betweens)
+const STOPS = ["#ff6b6b", "#ff922b", "#ffd43b", "#b2f2bb", "#69db7c", "#20c997"];
+function goodness(m, v) { const t = v / 5; return m.high ? t : 1 - t; }
+function colour(g) {
+  return STOPS[Math.round(Math.max(0, Math.min(1, g)) * (STOPS.length - 1))];
+}
+const has = v => v !== null && v !== undefined;
+const SCALE = [0, 1, 2, 3, 4, 5];
+const isScale = m => m.kind !== "number";
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+// A check-in before 4 AM counts for the previous day (matches Store.DAY_STARTS_AT_HOUR in the app).
+const DAY_STARTS_AT_HOUR = 4;
+const todayIso = () => iso(new Date(Date.now() - DAY_STARTS_AT_HOUR * 3600e3));
+const shift = (s, n) => { const [y,m,d] = s.split("-").map(Number); return iso(new Date(y, m-1, d+n)); };
+const label = s => {
+  if (s === todayIso()) return "Today";
+  if (s === shift(todayIso(), -1)) return "Yesterday";
+  const [y,m,d] = s.split("-").map(Number);
+  return new Date(y, m-1, d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+};
+
+let current = todayIso();
+let entries = {};          // date -> {pain, activity, anxiety, mood, note}
+let store = null;          // {save(date, obj), remove?}
+const $ = id => document.getElementById(id);
+
+// ---- build dials
+const dials = $("dials");
+function buildDials() {
+  dials.innerHTML = "";
+  rulers.clear();
+  for (const m of METRICS) {
+    const el = document.createElement("div");
+    el.className = "dial";
+    if (isScale(m)) {
+      el.style.setProperty("--n", 6);
+      el.innerHTML = `<div class="dial-head"><span class="dial-name">${esc(m.name)}</span><span class="dial-val" id="v-${m.key}">Not rated</span></div>
+        <div class="scale" role="group" aria-label="${esc(m.name)}, 0 to 5">${SCALE.map(n => `<button id="b-${m.key}-${n}" data-k="${m.key}" data-n="${n}" aria-pressed="false" style="--b:${colour(goodness(m, n))}">${n}</button>`).join("")}</div>
+        <div class="anchors"><span>0 · ${esc(m.lo || "Low")}</span><span>5 · ${esc(m.hi || "High")}</span></div>`;
+    } else {
+      el.innerHTML = `<div class="dial-head"><span class="dial-name">${esc(m.name)}</span><span class="dial-val" id="v-${m.key}">Not entered</span></div>
+        <div class="readout" id="r-${m.key}"><b>–</b><span>${esc(m.unit || "")}</span></div>
+        <div class="ruler-wrap"><div class="ruler" id="ru-${m.key}" role="slider" tabindex="0" aria-label="${esc(m.name)}"><div class="ruler-track" id="rt-${m.key}"></div></div></div>
+        <div class="nudges"><button data-nk="${m.key}" data-d="-1" aria-label="Minus 0.1">− 0.1</button><button data-nk="${m.key}" data-d="0">Same as last</button><button data-nk="${m.key}" data-d="1" aria-label="Plus 0.1">+ 0.1</button><button data-nk="${m.key}" data-d="clear">Clear</button></div>`;
+    }
+    dials.appendChild(el);
+    if (!isScale(m)) setupRuler(m);
+  }
+}
+
+// ---- number dials: a ruler in tenths. Scrolling sets the value; the needle is the centre.
+const PX = 12;                 // pixels per 0.1
+const rulers = new Map();      // key -> { lo, hi, el, track, touched, timer, shown }
+function lastValue(key, before) {
+  const ds = Object.keys(entries).filter(d => d < before && has(entries[d]?.[key])).sort();
+  return ds.length ? entries[ds[ds.length - 1]][key] : null;
+}
+function setupRuler(m) {
+  const el = $(`ru-${m.key}`), track = $(`rt-${m.key}`);
+  const r = { lo: 0, hi: 0, el, track, touched: false, timer: 0, shown: null };
+  rulers.set(m.key, r);
+  const grab = () => { r.touched = true; };
+  for (const ev of ["pointerdown", "touchstart", "wheel", "keydown"]) el.addEventListener(ev, grab, { passive: true });
+  el.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); nudge(m.key, e.key === "ArrowLeft" ? -1 : 1); }
+  });
+  el.addEventListener("scroll", () => {
+    const t = r.lo + Math.round(el.scrollLeft / PX);
+    if (t !== r.shown) { r.shown = t; showReading(m, t / 10, !r.touched && !has((entries[current] || {})[m.key])); if (r.touched && navigator.vibrate) navigator.vibrate(4); }
+    if (!r.touched) return;
+    clearTimeout(r.timer);
+    r.timer = setTimeout(() => { r.touched = false; r.timer = 0; setNumber(m.key, t / 10); placeRuler(m, t / 10, true); }, 450);
+  });
+}
+function placeRuler(m, v, smooth) {
+  const r = rulers.get(m.key); if (!r) return;
+  const t = Math.round(v * 10);
+  if (t < r.lo + 30 || t > r.hi - 30) {       // (re)build 20 lb either side
+    r.lo = Math.max(0, Math.round(v - 20) * 10); r.hi = r.lo + 400;
+    r.track.style.width = `${(r.hi - r.lo) * PX + 3}px`;
+    let labels = "";
+    for (let w = r.lo; w <= r.hi; w += 10) labels += `<span style="left:${(w - r.lo) * PX + 1}px">${w / 10}</span>`;
+    r.track.innerHTML = labels;
+  }
+  r.el.scrollTo({ left: (t - r.lo) * PX, behavior: smooth ? "smooth" : "instant" });
+}
+function showReading(m, v, unset) {
+  const box = $(`r-${m.key}`); if (!box) return;
+  box.querySelector("b").textContent = v == null ? "–" : v.toFixed(1);
+  box.classList.toggle("unset", !!unset);
+}
+function setNumber(key, v) {
+  const cur = { ...(entries[current] || {}) };
+  if (v == null) delete cur[key]; else cur[key] = Math.round(v * 10) / 10;
+  delete cur[`${key}_carried`];                 // typed in by hand, so not carried forward
+  entries[current] = cur;
+  renderDay(); renderHistory(); queueSave();
+}
+function nudge(key, d) {
+  const m = METRICS.find(x => x.key === key); if (!m) return;
+  const e = entries[current] || {};
+  const base = has(e[key]) ? e[key] : (lastValue(key, current) ?? m.start ?? 0);
+  setNumber(key, d === "clear" ? null : Math.round(base * 10 + Number(d)) / 10);
+}
+dials.addEventListener("click", e => {
+  const nb = e.target.closest("button[data-nk]");
+  if (nb) { nudge(nb.dataset.nk, nb.dataset.d); return; }
+  const b = e.target.closest("button[data-k]"); if (!b) return;
+  const k = b.dataset.k, n = +b.dataset.n;
+  const cur = { ...(entries[current] || {}) };
+  cur[k] = cur[k] === n ? null : n;   // tap again to clear
+  entries[current] = cur;
+  renderDay(); renderHistory(); queueSave();
+});
+
+let noteTimer;
+$("note").addEventListener("input", () => {
+  entries[current] = { ...(entries[current] || {}), note: $("note").value };
+  clearTimeout(noteTimer); noteTimer = setTimeout(queueSave, 700);
+});
+$("prev").onclick = () => { flush(); current = shift(current, -1); renderDay(); };
+$("next").onclick = () => { if (current < todayIso()) { flush(); current = shift(current, 1); renderDay(); } };
+
+function renderDay() {
+  $("dayLabel").textContent = label(current);
+  $("next").disabled = current >= todayIso();
+  const e = entries[current] || {};
+  for (const m of METRICS) {
+    if (isScale(m)) {
+      for (const n of SCALE) $(`b-${m.key}-${n}`).setAttribute("aria-pressed", e[m.key] === n ? "true" : "false");
+      const w = m.words?.[e[m.key]];
+      $(`v-${m.key}`).textContent = has(e[m.key]) ? (w ? `${e[m.key]} · ${w}` : String(e[m.key])) : "Not rated";
+    } else {
+      const v = has(e[m.key]) ? e[m.key] : null;
+      const shown = v ?? lastValue(m.key, current) ?? m.start ?? 0;
+      $(`v-${m.key}`).textContent = v == null ? "Not entered · drag to set" : (e[`${m.key}_carried`] ? "Carried forward" : `${v.toFixed(1)} ${m.unit || ""}`.trim());
+      const r = rulers.get(m.key);
+      if (r && r.touched && !r.timer) r.touched = false;   // a tap without a drag
+      if (r && !r.touched) { showReading(m, shown, v == null); placeRuler(m, shown, false); }
+    }
+  }
+  if (document.activeElement !== $("note")) $("note").value = e.note || "";
+}
+
+function renderHistory() {
+  const t = todayIso();
+  const days = Array.from({ length: 28 }, (_, i) => shift(t, i - 27));
+  const grid = $("grid"); grid.innerHTML = "";
+  let any = false;
+  for (const m of METRICS.filter(isScale)) {
+    const l = document.createElement("div"); l.className = "lbl"; l.textContent = m.short || m.name; grid.appendChild(l);
+    for (const d of days) {
+      const c = document.createElement("div"); c.className = "cell";
+      const v = entries[d]?.[m.key];
+      if (has(v)) { any = true; c.style.background = colour(goodness(m, v)); }
+      c.title = `${label(d)} — ${m.name}: ${v ?? "—"}`;
+      grid.appendChild(c);
+    }
+  }
+  const fmt = s => { const [y,mo,d] = s.split("-").map(Number); return new Date(y, mo-1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" }); };
+  $("ticks").innerHTML = `<span>${fmt(days[0])}</span><span>${fmt(days[14])}</span><span>Today</span>`;
+  $("emptyMsg").hidden = any;
+
+  const avg = (from, to, k) => { const vs = []; for (let i = from; i < to; i++) { const v = entries[shift(t, -i)]?.[k]; if (has(v)) vs.push(v); } return vs.length ? vs.reduce((a,b)=>a+b,0)/vs.length : null; };
+  $("avgs").innerHTML = METRICS.map(m => {
+    const now = avg(0, 7, m.key), prev = avg(7, 14, m.key);
+    const diff = now != null && prev != null ? now - prev : null;
+    const d = diff == null ? "" : `${diff >= 0 ? "+" : "−"}${Math.abs(diff).toFixed(1)} vs prior week`;
+    const c = now == null ? "var(--line)" : isScale(m) ? colour(goodness(m, now)) : "var(--accent)";
+    return `<div class="avg" style="--c:${c}"><span>${esc(m.short || m.name)} · 7-day</span><b>${now == null ? "–" : now.toFixed(1)}</b><small>${d}</small></div>`;
+  }).join("");
+}
+
+// ---- saving
+let pending = new Set(), saving = false;
+function queueSave() { pending.add(current); setStatus("Saving…"); drain(); }
+function flush() { clearTimeout(noteTimer); if (entries[current]) queueSave(); }
+async function drain() {
+  if (saving || !store) return; saving = true;
+  try {
+    while (pending.size) {
+      const d = pending.values().next().value; pending.delete(d);
+      await store.save(d, { ...entries[d], date: d, updatedAt: new Date().toISOString() });
+    }
+    setStatus(`Saved · ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`);
+  } catch (e) {
+    setStatus("Couldn't save. Check your connection and tap again.");
+  } finally { saving = false; if (pending.size) drain(); }
+}
+function setStatus(s) { $("status").textContent = s; }
+
+// ---- phone storage (Android app bridge). Falls back to browser storage when opened outside the app.
+const App = window.DailyDials || null;
+const LS = "dailydials.entries";
+function loadAll() {
+  try { return JSON.parse(App ? App.getAll() : (localStorage.getItem(LS) || "{}")); } catch { return {}; }
+}
+store = {
+  async save(d, obj) {
+    if (App) { App.save(d, JSON.stringify(obj)); return; }
+    const all = loadAll(); all[d] = obj; localStorage.setItem(LS, JSON.stringify(all));
+  },
+};
+// called by the app after a notification tap or a sync brings in new data
+window.reloadEntries = (goToday) => {
+  const next = loadAll();
+  if (document.activeElement === $("note") && entries[current]) next[current] = entries[current];
+  entries = next;
+  if (goToday) current = todayIso();
+  renderDay(); renderHistory();
+};
+window.onSyncStatus = (msg) => { $("syncStatus").textContent = msg; };
+// called by the app when a notification button opens a specific day
+window.openDay = (d) => {
+  entries = loadAll();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayIso()) current = d;
+  renderDay(); renderHistory();
+};
+
+// settings
+function loadSettings() {
+  if (!App) { $("syncStatus").textContent = "Open this inside the Daily Dials app to sync and get reminders."; return; }
+  try {
+    const st = JSON.parse(App.getSettings());
+    $("remTime").value = `${pad(st.hour)}:${pad(st.minute)}`;
+    $("weekendTime").value = `${pad(st.weekendHour)}:${pad(st.weekendMinute)}`;
+    $("weekendOn").checked = !!st.weekendOn;
+    $("nudge").checked = st.nudge !== false;
+    setDays(st.days ?? 127);
+    setAlert(st.alert || "silent");
+    showNext(st.next, st.pausedUntil);
+    $("sheetUrl").value = st.url || "";
+    $("syncStatus").textContent = st.status || (st.url ? "Connected to your sheet." : "Not connected to a sheet yet. Entries are saved on this phone.");
+  } catch {}
+}
+let days = 127, alertStyle = "silent";
+function setDays(b) {
+  days = b;
+  for (const el of $("days").children) el.setAttribute("aria-pressed", String(!!(b & (1 << Number(el.dataset.bit)))));
+}
+function setAlert(v) {
+  alertStyle = v;
+  for (const el of $("alert").children) el.setAttribute("aria-pressed", String(el.dataset.v === v));
+}
+$("days").onclick = e => { const b = e.target.closest("button"); if (b) setDays(days ^ (1 << Number(b.dataset.bit))); };
+$("alert").onclick = e => { const b = e.target.closest("button"); if (b) setAlert(b.dataset.v); };
+function showNext(next, pausedUntil) {
+  const when = t => new Date(t).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  let msg;
+  if (pausedUntil === -1) msg = "Reminders are paused until you resume them.";
+  else if (next < 0) msg = "No reminder days chosen.";
+  else msg = (pausedUntil > Date.now() ? "Paused. " : "") + `Next reminder: ${when(next)}.`;
+  $("nextRem").textContent = msg;
+  $("resume").hidden = !(pausedUntil === -1 || pausedUntil > Date.now());
+}
+$("pauseRow").onclick = e => {
+  const b = e.target.closest("button"); if (!b || !App) return;
+  const n = Number(b.dataset.days);
+  let until = 0;
+  if (n === -1) until = -1;
+  else if (n > 0) { const d = new Date(); d.setHours(DAY_STARTS_AT_HOUR, 0, 0, 0); d.setDate(d.getDate() + n + 1); until = d.getTime(); }
+  const next = Number(App.pause(String(until)));
+  showNext(next, until);
+};
+$("saveSettings").onclick = () => {
+  if (!App) return;
+  const hm = (v, dh) => { const [h, m] = (v || dh).split(":").map(Number); return [h, m]; };
+  const [h, m] = hm($("remTime").value, "19:00");
+  const [wh, wm] = hm($("weekendTime").value, "10:00");
+  App.setSettings(JSON.stringify({ hour: h, minute: m, url: $("sheetUrl").value.trim(), days,
+    weekendOn: $("weekendOn").checked, weekendHour: wh, weekendMinute: wm, nudge: $("nudge").checked, alert: alertStyle }));
+  try { const st = JSON.parse(App.getSettings()); showNext(st.next, st.pausedUntil); } catch {}
+  $("syncStatus").textContent = "Settings saved.";
+};
+$("syncNow").onclick = () => { if (App) { $("syncStatus").textContent = "Syncing…"; App.syncNow(); } };
+$("testRem").onclick = () => { if (App) App.testReminder(); };
+$("doImport").onclick = () => {
+  let data;
+  try { data = JSON.parse($("importBox").value); } catch { $("syncStatus").textContent = "That doesn't look like copied entries. Copy them again from the old page and paste the whole thing."; return; }
+  let n = 0;
+  for (const [d, e] of Object.entries(data)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || typeof e !== "object") continue;
+    entries[d] = { ...e, date: d }; pending.add(d); n++;
+  }
+  drain(); renderDay(); renderHistory();
+  $("importBox").value = "";
+  $("syncStatus").textContent = `Imported ${n} day${n === 1 ? "" : "s"}.`;
+};
+
+// ---- indicators: load, save, edit
+const LS_IND = "dailydials.indicators";
+async function loadIndicators() {
+  if (App) { try { return JSON.parse(App.getIndicators()); } catch {} }
+  try { const s = localStorage.getItem(LS_IND); if (s) return JSON.parse(s); } catch {}
+  try { return await (await fetch("indicators.json")).json(); } catch { return []; }
+}
+function applyIndicators(save) {
+  if (save) {
+    const j = JSON.stringify(INDICATORS);
+    if (App) App.setIndicators(j); else try { localStorage.setItem(LS_IND, j); } catch {}
+  }
+  METRICS = INDICATORS.filter(m => !m.hidden);
+  buildDials(); renderDay(); renderHistory(); renderEditor();
+}
+const RESERVED = new Set(["date", "note", "updatedAt", "updated_at"]);
+function newKey(name) {
+  // the sheet column: the part before a dash, colon or question, e.g. "Nutrition — did I eat healthy?" → nutrition
+  let base = name.split(/\s[—–-]\s|[:?(]/)[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24);
+  if (!/^[a-z]/.test(base)) base = "ind_" + base;
+  const taken = k => RESERVED.has(k) || INDICATORS.some(m => m.key === k || `${m.key}_carried` === k);
+  let k = base, n = 2;
+  while (taken(k)) k = `${base}_${n++}`;
+  return k;
+}
+function renderEditor() {
+  const vis = INDICATORS.map((m, i) => ({ m, i })).filter(x => !x.m.hidden);
+  $("indList").innerHTML = vis.map(({ m, i }) => `<div class="ind">
+    <div class="ind-top"><input data-i="${i}" value="${esc(m.name)}" aria-label="Name">
+      <button data-act="up" data-i="${i}" aria-label="Move up">↑</button><button data-act="down" data-i="${i}" aria-label="Move down">↓</button><button class="rm" data-act="rm" data-i="${i}" aria-label="Remove ${esc(m.name)}">✕</button></div>
+    <div class="chips">${isScale(m)
+      ? `<span>0–5 dial</span><button data-act="high" data-i="${i}">${m.high ? "High is good" : "Low is good"}</button><button data-act="notif" data-i="${i}" aria-pressed="${!!m.notif}">${m.notif ? "In notification" : "App only"}</button>`
+      : `<span>Number · 1 decimal${m.unit ? " · " + esc(m.unit) : ""}</span><button data-act="carry" data-i="${i}" aria-pressed="${!!m.carry}">${m.carry ? "Carry forward if blank" : "Leave blank days empty"}</button>`}</div>
+  </div>`).join("");
+  const gone = INDICATORS.map((m, i) => ({ m, i })).filter(x => x.m.hidden);
+  $("indRemoved").innerHTML = gone.length ? `<p class="hint">Removed: ${gone.map(({ m, i }) => `${esc(m.name)} <button class="btn ghost" data-act="restore" data-i="${i}" style="padding:.3rem .6rem">Restore</button>`).join(" ")}</p>` : "";
+}
+function editorClick(e) {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const i = Number(b.dataset.i), m = INDICATORS[i]; if (!m) return;
+  const swap = d => {           // move past hidden ones so the visible order changes
+    let j = i + d;
+    while (j >= 0 && j < INDICATORS.length && INDICATORS[j].hidden) j += d;
+    if (j < 0 || j >= INDICATORS.length) return;
+    [INDICATORS[i], INDICATORS[j]] = [INDICATORS[j], INDICATORS[i]];
+  };
+  switch (b.dataset.act) {
+    case "up": swap(-1); break;
+    case "down": swap(1); break;
+    case "rm": m.hidden = true; break;
+    case "restore": m.hidden = false; break;
+    case "high": m.high = !m.high; break;
+    case "notif": m.notif = !m.notif; break;
+    case "carry": m.carry = !m.carry; break;
+  }
+  applyIndicators(true);
+}
+$("indList").addEventListener("click", editorClick);
+$("indRemoved").addEventListener("click", editorClick);
+$("indList").addEventListener("change", e => {
+  const inp = e.target.closest("input[data-i]"); if (!inp) return;
+  const m = INDICATORS[Number(inp.dataset.i)], name = inp.value.trim();
+  if (!m || !name) { renderEditor(); return; }
+  m.name = name; if (m.short) delete m.short;
+  applyIndicators(true);
+});
+let newKind = "scale";
+$("newKind").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  newKind = b.dataset.v;
+  for (const x of $("newKind").children) x.setAttribute("aria-pressed", String(x.dataset.v === newKind));
+};
+$("addInd").onclick = () => {
+  const name = $("newName").value.trim(); if (!name) { $("newName").focus(); return; }
+  const m = newKind === "scale"
+    ? { key: newKey(name), name, kind: "scale", high: true, notif: true, lo: "Low", hi: "High" }
+    : { key: newKey(name), name, kind: "number", notif: false, carry: false };
+  INDICATORS.push(m);
+  $("newName").value = "";
+  applyIndicators(true);
+};
+
+entries = loadAll();
+renderDay(); renderHistory(); loadSettings();
+loadIndicators().then(list => { INDICATORS = Array.isArray(list) ? list : []; applyIndicators(false); });
+</script>
+</body></html>

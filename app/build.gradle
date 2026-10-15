@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application'
+}
+
+def run = (System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger()
+
+android {
+    namespace 'ca.fieldsa.dailydials'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'ca.fieldsa.dailydials'
+        minSdk 26
+        targetSdk 34
+        versionCode run
+        versionName "1.0.${run}"
+    }
+
+    // A fixed key kept in the repo, so every new build installs over the old one.
+    signingConfigs {
+        personal {
+            storeFile file('dailydials.keystore')
+            storePassword 'dailydials'
+            keyAlias 'dailydials'
+            keyPassword 'dailydials'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.personal
+        }
+        debug {
+            signingConfig signingConfigs.personal
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
