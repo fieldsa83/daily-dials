@@ -553,7 +553,7 @@ function renderChart(m) {
   const fmtD = d => d == null ? "–" : `${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}`;
   st.innerHTML = `<div><span>Latest · ${fmtDay(last[0], { month: "short", day: "numeric" })}</span><b>${last[1].toFixed(1)}</b></div>
     <div><span>30-day change</span><b>${fmtD(ago == null ? null : last[1] - ago)}</b></div>
-    <div><span>To target</span><b>${m.target == null ? "–" : fmtD(last[1] - m.target)}</b></div>`;
+    <div><span>From target</span><b>${m.target == null ? "–" : fmtD(last[1] - m.target)}</b></div>`;
   const line = CH.view === "M" ? grouped(daily, monthStart) : CH.view === "W" ? grouped(daily, weekStart) : daily;
   const end = Math.max(today, last[0]) + 3, span = RANGES[CH.range] ?? 366;
   const start = span === Infinity ? pts[0][0] - 3 : end - span;
