@@ -27,7 +27,9 @@ const KEY_FOR = Object.fromEntries(COLUMNS.map(([k, h]) => [h, k]));
 
 function sheet_() {
   const ss = SpreadsheetApp.getActive();
-  let sh = ss.getSheetByName(SHEET_NAME);
+  // The tab named SHEET_NAME, else any tab that already starts with a "date" column (whatever it was renamed to).
+  let sh = ss.getSheetByName(SHEET_NAME) ||
+    ss.getSheets().find(t => t.getLastRow() > 0 && String(t.getRange(1, 1).getDisplayValue()).trim() === 'date');
   if (!sh) {
     sh = ss.insertSheet(SHEET_NAME);
     sh.getRange('A:A').setNumberFormat('@'); // keep dates as plain yyyy-mm-dd text
