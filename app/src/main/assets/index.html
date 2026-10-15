@@ -332,8 +332,9 @@ function setupRuler(m) {
 }
 function setNumber(key, v) {
   const cur = { ...(entries[current] || {}) };
-  if (v == null) delete cur[key]; else cur[key] = Math.round(v * 10) / 10;
-  delete cur[`${key}_carried`];                 // typed in by hand, so not carried forward
+  // <key>_carried: 0 = entered by hand, 1 = carried forward from an earlier day, absent = no value at all
+  if (v == null) { delete cur[key]; delete cur[`${key}_carried`]; }
+  else { cur[key] = Math.round(v * 10) / 10; cur[`${key}_carried`] = 0; }
   entries[current] = cur;
   renderDay(); renderHistory(); queueSave();
 }
@@ -368,7 +369,7 @@ function renderDay() {
       const prev = lastValue(m.key, current);
       const diff = v != null && prev != null ? Math.round((v - prev) * 10) / 10 : null;
       $(`v-${m.key}`).textContent = v == null ? (prev != null ? `Last: ${prev.toFixed(1)}` : "Drag to set")
-        : e[`${m.key}_carried`] ? "Carried forward"
+        : Number(e[`${m.key}_carried`]) === 1 ? "Carried forward"
         : diff == null ? "" : diff === 0 ? "Same as last" : `${diff > 0 ? "+" : "−"}${Math.abs(diff).toFixed(1)} from last`;
       const ru = rulers.get(m.key);
       if (ru && !ru.drag) drawRuler(m, Math.round(shown * 10), v != null);
@@ -425,7 +426,7 @@ const dayNum = s => { const [y, m, d] = s.split("-").map(Number); return Math.ro
 const dayStr = n => new Date(n * 864e5).toISOString().slice(0, 10);
 const fmtDay = (n, opts) => new Date(n * 864e5).toLocaleDateString(undefined, { timeZone: "UTC", ...opts });
 function readings(key) {          // [dayNumber, value] for days actually entered (not carried forward)
-  return Object.keys(entries).filter(d => has(entries[d]?.[key]) && !entries[d][`${key}_carried`]).sort().map(d => [dayNum(d), Number(entries[d][key])]);
+  return Object.keys(entries).filter(d => has(entries[d]?.[key]) && Number(entries[d][`${key}_carried`]) !== 1).sort().map(d => [dayNum(d), Number(entries[d][key])]);
 }
 function filled(pts) {             // every day from first to last reading, gaps filled by straight lines
   const out = [];
@@ -660,7 +661,7 @@ $("doImport").onclick = () => {
       const iso = `${y}-${pad(mo)}-${pad(d)}`, v = Math.round(parseFloat(mt[2].replace(",", ".")) * 10) / 10;
       if (isNaN(v)) continue;
       const cur = { ...(entries[iso] || {}), date: iso };
-      cur[num.key] = v; delete cur[`${num.key}_carried`];
+      cur[num.key] = v; cur[`${num.key}_carried`] = 0;
       touched[iso] = cur;
     }
   }
