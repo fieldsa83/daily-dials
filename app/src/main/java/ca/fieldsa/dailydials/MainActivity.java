@@ -9,7 +9,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.HapticFeedbackConstants;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -112,7 +113,11 @@ public class MainActivity extends Activity {
         /** A light click for each notch of the weight ruler. */
         @JavascriptInterface
         public void tick() {
-            runOnUiThread(() -> web.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING));
+            Vibrator v = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+            if (v == null || !v.hasVibrator()) return;
+            // a firm, short click: the "heavy click" effect where the phone has it, else a 25 ms full-strength buzz
+            if (Build.VERSION.SDK_INT >= 29) v.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK));
+            else v.vibrate(VibrationEffect.createOneShot(25, 255));
         }
 
         @JavascriptInterface
