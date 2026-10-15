@@ -570,7 +570,8 @@ function renderChart(m) {
   if (m.target != null && hi - m.target < step * 0.5) hi += step;
   // plot area: a narrow y-axis on the left, almost no right margin (the card's side padding is halved too)
   const W = cv.clientWidth || 340, H = 190, T = 10, B = 24, L = 30, R = 4;
-  const X = t => L + (t - start) / (end - start) * (W - L - R), Y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+  const P = 6;   // inner padding so the first and last dots are not cut off
+  const X = t => L + P + (t - start) / (end - start) * (W - L - R - 2 * P), Y = v => T + (hi - v) / (hi - lo) * (H - T - B);
   let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(m.name)} chart"><defs><clipPath id="cp-${m.key}"><rect x="${L}" y="0" width="${W - L - R}" height="${H}"/></clipPath></defs>`;
   for (let v = lo; v <= hi + 1e-9; v += step) if (m.target == null || Math.abs(v - m.target) > step * 0.3) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text class="ax" x="${L - 6}" y="${Y(v) + 3.5}" text-anchor="end">${+v.toFixed(1)}</text>`;
   // x labels: years, months or days depending on the span
