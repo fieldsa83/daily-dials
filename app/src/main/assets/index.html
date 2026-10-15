@@ -65,7 +65,11 @@ textarea { font: inherit; color: var(--ink); background: var(--surface); border:
 .status { font-size: .85rem; color: var(--muted); min-height: 1.2em; }
 h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0 0 .75rem; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; }
-.grid-wrap { overflow-x: auto; }
+/* the history never takes more than about half the screen; with many indicators it scrolls inside */
+.grid-wrap { max-height: calc(50vh - 7.5rem); overflow-y: auto; overflow-x: hidden; padding-right: 6px; margin-right: -6px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.grid-wrap::-webkit-scrollbar { width: 5px; }
+.grid-wrap::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+.grid .hd, .grid .hd-sp { position: sticky; top: 0; background: var(--surface); z-index: 1; }
 .grid { display: grid; grid-template-columns: 5.2rem repeat(14, minmax(0, 1fr)) 2.4rem; gap: 4px; align-items: center; }
 .grid .av { font-family: var(--display); font-weight: 700; font-size: .9rem; text-align: center; font-variant-numeric: tabular-nums; border-radius: 6px; padding: .1rem 0; background: var(--c); }
 .grid .hd { font-size: .68rem; color: var(--muted); text-align: center; }
@@ -405,7 +409,7 @@ function renderHistory() {
   const grid = $("grid"); grid.innerHTML = "";
   const avg = (key, n) => { const vs = []; for (let i = 0; i < n; i++) { const v = entries[shift(t, -i)]?.[key]; if (has(v)) vs.push(v); } return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null; };
   let any = false;
-  grid.insertAdjacentHTML("beforeend", `<div></div>${days.map(() => "<div></div>").join("")}<div class="hd">7-day</div>`);
+  grid.insertAdjacentHTML("beforeend", `<div class="hd-sp"></div>${days.map(() => `<div class="hd-sp"></div>`).join("")}<div class="hd">7-day</div>`);
   for (const m of METRICS.filter(isScale)) {
     let row = `<div class="lbl">${esc(m.short || m.name)}</div>`;
     for (const d of days) {
