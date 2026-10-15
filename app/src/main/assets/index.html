@@ -151,8 +151,16 @@ body.on-settings header { display: none; }
 .target-in { display: inline-flex; align-items: center; gap: .3rem; font: 700 .75rem var(--body); color: var(--muted); padding: 0 .3rem 0 .7rem; border: 1px solid var(--line); border-radius: 14px; }
 .target-in input { width: 3.6rem; font: 700 .8rem var(--body); color: var(--ink); background: var(--bg); border: 0; border-radius: 8px; padding: .3rem .4rem; }
 /* indicator editor */
-.ind { display: flex; flex-direction: column; gap: .4rem; padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.ind { border-bottom: 1px solid var(--line); }
 .ind:last-child { border-bottom: 0; }
+.ind > summary { list-style: none; display: flex; align-items: center; gap: .6rem; min-height: 48px; cursor: pointer; }
+.ind > summary::-webkit-details-marker { display: none; }
+.ind > summary b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ind > summary small { color: var(--muted); font-size: .75rem; white-space: nowrap; }
+.ind > summary::after { content: "›"; color: var(--muted); font-size: 1.2rem; transition: transform .15s; }
+.ind[open] > summary::after { transform: rotate(90deg); }
+.ind .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.ind-body { display: flex; flex-direction: column; gap: .5rem; padding: 0 0 .8rem; }
 .ind-top { display: flex; align-items: center; gap: .25rem; }
 .ind-top input { flex: 1; min-width: 0; font: 700 1rem var(--body); color: var(--ink); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: .4rem; }
 .ind-top input:focus { border-color: var(--line); background: var(--bg); outline: none; }
@@ -204,7 +212,7 @@ body.on-settings header { display: none; }
   <section class="panel settings" id="indicators">
     <h2>Indicators</h2>
     <div class="set-body">
-      <p class="hint">Rename by typing. Arrows change the order here and in the notification. Removing hides an indicator; its past values stay in the sheet.</p>
+      <p class="hint">Tap one to rename, reorder or change it. Removing hides it; its past values stay in the sheet.</p>
       <div id="indList"></div>
       <div id="indRemoved"></div>
       <fieldset class="group">
@@ -218,25 +226,34 @@ body.on-settings header { display: none; }
     </div>
   </section>
 
-  <section class="panel settings" id="settings">
-    <h2>Reminder, sync &amp; import</h2>
+  <section class="panel settings" id="numSettings">
+    <h2>Weight</h2>
+    <div class="set-body" id="numList"></div>
+  </section>
+
+  <section class="panel settings" id="reminders">
+    <h2>Reminders</h2>
     <div class="set-body">
-      <fieldset class="group">
-        <legend>Reminder</legend>
-        <label class="field"><span>Remind me at</span><input type="time" id="remTime" value="19:00"></label>
-        <div class="days" id="days" role="group" aria-label="Days">
-          <button data-bit="0" aria-label="Monday">M</button><button data-bit="1" aria-label="Tuesday">T</button><button data-bit="2" aria-label="Wednesday">W</button><button data-bit="3" aria-label="Thursday">T</button><button data-bit="4" aria-label="Friday">F</button><button data-bit="5" aria-label="Saturday">S</button><button data-bit="6" aria-label="Sunday">S</button>
-        </div>
-        <div class="check"><input type="checkbox" id="weekendOn"><label for="weekendOn">Different time on weekends</label><input type="time" id="weekendTime" value="10:00" aria-label="Weekend reminder time"></div>
-        <label class="check"><input type="checkbox" id="nudge" checked>Nudge again 2 hours later if I haven't answered</label>
-        <div class="seg" id="alert" role="group" aria-label="Alert style">
-          <button data-v="silent">Silent</button><button data-v="vibrate">Vibrate</button><button data-v="sound">Sound</button>
-        </div>
-        <div class="row" id="pauseRow"><button class="btn ghost" data-days="3">Pause 3 days</button><button class="btn ghost" data-days="7">Pause 1 week</button><button class="btn ghost" data-days="-1">Pause until I turn it on</button><button class="btn ghost" data-days="0" id="resume" hidden>Resume</button></div>
-        <p class="hint" id="nextRem"></p>
-      </fieldset>
+      <label class="field"><span>Remind me at</span><input type="time" id="remTime" value="19:00"></label>
+      <div class="days" id="days" role="group" aria-label="Days">
+        <button data-bit="0" aria-label="Monday">M</button><button data-bit="1" aria-label="Tuesday">T</button><button data-bit="2" aria-label="Wednesday">W</button><button data-bit="3" aria-label="Thursday">T</button><button data-bit="4" aria-label="Friday">F</button><button data-bit="5" aria-label="Saturday">S</button><button data-bit="6" aria-label="Sunday">S</button>
+      </div>
+      <div class="check"><input type="checkbox" id="weekendOn"><label for="weekendOn">Different time on weekends</label><input type="time" id="weekendTime" value="10:00" aria-label="Weekend reminder time"></div>
+      <label class="check"><input type="checkbox" id="nudge" checked>Nudge again 2 hours later if I haven't answered</label>
+      <div class="seg" id="alert" role="group" aria-label="Alert style">
+        <button data-v="silent">Silent</button><button data-v="vibrate">Vibrate</button><button data-v="sound">Sound</button>
+      </div>
+      <div class="row" id="pauseRow"><button class="btn ghost" data-days="3">Pause 3 days</button><button class="btn ghost" data-days="7">Pause 1 week</button><button class="btn ghost" data-days="-1">Pause until I turn it on</button><button class="btn ghost" data-days="0" id="resume" hidden>Resume</button></div>
+      <p class="hint" id="nextRem"></p>
+      <div class="row"><button class="btn" id="saveSettings">Save reminders</button><button class="btn ghost" id="testRem">Show test reminder</button></div>
+    </div>
+  </section>
+
+  <section class="panel settings" id="settings">
+    <h2>Google Sheet &amp; import</h2>
+    <div class="set-body">
       <label class="field"><span>Google Sheet link</span><input type="url" id="sheetUrl" placeholder="https://script.google.com/macros/s/…/exec?token=…" autocomplete="off"></label>
-      <div class="row"><button class="btn" id="saveSettings">Save settings</button><button class="btn ghost" id="syncNow">Sync now</button><button class="btn ghost" id="testRem">Show test reminder</button></div>
+      <div class="row"><button class="btn" id="saveLink">Save link</button><button class="btn ghost" id="syncNow">Sync now</button></div>
       <p class="hint" id="syncStatus">Not connected to a sheet yet. Entries are saved on this phone.</p>
       <label class="field"><span>Import entries</span><textarea id="importBox" placeholder="Paste entries from the old Daily Dials page, or weight history as lines of date, weight (e.g. 2019-03-04, 137.2)"></textarea></label>
       <div class="row"><button class="btn ghost" id="doImport">Import</button></div>
@@ -651,7 +668,7 @@ $("pauseRow").onclick = e => {
   const next = Number(App.pause(String(until)));
   showNext(next, until);
 };
-$("saveSettings").onclick = () => {
+$("saveSettings").onclick = $("saveLink").onclick = (ev) => {
   if (!App) return;
   const hm = (v, dh) => { const [h, m] = (v || dh).split(":").map(Number); return [h, m]; };
   const [h, m] = hm($("remTime").value, "19:00");
@@ -659,7 +676,8 @@ $("saveSettings").onclick = () => {
   App.setSettings(JSON.stringify({ hour: h, minute: m, url: $("sheetUrl").value.trim(), days,
     weekendOn: $("weekendOn").checked, weekendHour: wh, weekendMinute: wm, nudge: $("nudge").checked, alert: alertStyle }));
   try { const st = JSON.parse(App.getSettings()); showNext(st.next, st.pausedUntil); } catch {}
-  $("syncStatus").textContent = "Settings saved.";
+  if (ev && ev.currentTarget && ev.currentTarget.id === "saveLink") { $("syncStatus").textContent = "Link saved. Syncing…"; App.syncNow(); }
+  else $("nextRem").textContent = "Saved. " + $("nextRem").textContent;
 };
 $("syncNow").onclick = () => { if (App) { $("syncStatus").textContent = "Syncing…"; App.syncNow(); } };
 $("testRem").onclick = () => { if (App) App.testReminder(); };
@@ -721,18 +739,31 @@ function newKey(name) {
   while (taken(k)) k = `${base}_${n++}`;
   return k;
 }
+const openInd = new Set();        // indicator rows the person has expanded (all collapsed to start)
 function renderEditor() {
-  const vis = INDICATORS.map((m, i) => ({ m, i })).filter(x => !x.m.hidden);
-  $("indList").innerHTML = vis.map(({ m, i }) => `<div class="ind">
-    <div class="ind-top"><input data-i="${i}" value="${esc(m.name)}" aria-label="Name">
-      <button data-act="up" data-i="${i}" aria-label="Move up">↑</button><button data-act="down" data-i="${i}" aria-label="Move down">↓</button><button class="rm" data-act="rm" data-i="${i}" aria-label="Remove ${esc(m.name)}">✕</button></div>
-    <div class="chips">${isScale(m)
-      ? `<span>0–5 dial</span><button data-act="high" data-i="${i}">${m.high ? "High is good" : "Low is good"}</button><button data-act="notif" data-i="${i}" aria-pressed="${!!m.notif}">${m.notif ? "In notification" : "App only"}</button>`
-      : `<span>Number · 1 decimal${m.unit ? " · " + esc(m.unit) : ""}</span><label class="target-in">Target <input type="number" step="0.1" inputmode="decimal" data-target="${i}" value="${m.target ?? ""}" placeholder="none" aria-label="Target for ${esc(m.name)}"></label><button data-act="carry" data-i="${i}" aria-pressed="${!!m.carry}">${m.carry ? "Carry forward if blank" : "Leave blank days empty"}</button>`}</div>
-  </div>`).join("");
+  const row = ({ m, i }) => {
+    const meta = isScale(m) ? `${m.high ? "High is good" : "Low is good"} · ${m.notif ? "notification" : "app only"}` : `target ${m.target ?? "none"}`;
+    const body = `<div class="ind-top"><input data-i="${i}" value="${esc(m.name)}" aria-label="Name">
+        <button data-act="up" data-i="${i}" aria-label="Move up">↑</button><button data-act="down" data-i="${i}" aria-label="Move down">↓</button><button class="rm" data-act="rm" data-i="${i}" aria-label="Remove ${esc(m.name)}">✕</button></div>
+      <div class="chips">${isScale(m)
+        ? `<span>0–5 dial</span><button data-act="high" data-i="${i}">${m.high ? "High is good" : "Low is good"}</button><button data-act="notif" data-i="${i}" aria-pressed="${!!m.notif}">${m.notif ? "In notification" : "App only"}</button>`
+        : `<span>Number · 1 decimal${m.unit ? " · " + esc(m.unit) : ""}</span><label class="target-in">Target <input type="number" step="0.1" inputmode="decimal" data-target="${i}" value="${m.target ?? ""}" placeholder="none" aria-label="Target for ${esc(m.name)}"></label><button data-act="carry" data-i="${i}" aria-pressed="${!!m.carry}">${m.carry ? "Carry forward if blank" : "Leave blank days empty"}</button>`}</div>`;
+    const sw = isScale(m) ? `<span class="sw" style="background:${colour(m.high ? 1 : 0)}"></span>` : "";
+    return `<details class="ind" data-key="${m.key}"${openInd.has(m.key) ? " open" : ""}><summary>${sw}<b>${esc(m.name)}</b><small>${meta}</small></summary><div class="ind-body">${body}</div></details>`;
+  };
+  const all = INDICATORS.map((m, i) => ({ m, i })).filter(x => !x.m.hidden);
+  $("indList").innerHTML = all.filter(x => isScale(x.m)).map(row).join("");
+  const nums = all.filter(x => !isScale(x.m));
+  $("numList").innerHTML = nums.map(row).join("");
+  $("numSettings").hidden = !nums.length;
+  $("numSettings").querySelector("h2").textContent = nums.length === 1 ? nums[0].m.name : "Numbers";
   const gone = INDICATORS.map((m, i) => ({ m, i })).filter(x => x.m.hidden);
   $("indRemoved").innerHTML = gone.length ? `<p class="hint">Removed: ${gone.map(({ m, i }) => `${esc(m.name)} <button class="btn ghost" data-act="restore" data-i="${i}" style="padding:.3rem .6rem">Restore</button>`).join(" ")}</p>` : "";
 }
+for (const id of ["indList", "numList"]) $(id).addEventListener("toggle", e => {
+  const d = e.target.closest("details.ind"); if (!d) return;
+  if (d.open) openInd.add(d.dataset.key); else openInd.delete(d.dataset.key);
+}, true);
 function editorClick(e) {
   const b = e.target.closest("button[data-act]"); if (!b) return;
   const i = Number(b.dataset.i), m = INDICATORS[i]; if (!m) return;
@@ -754,8 +785,9 @@ function editorClick(e) {
   applyIndicators(true);
 }
 $("indList").addEventListener("click", editorClick);
+$("numList").addEventListener("click", editorClick);
 $("indRemoved").addEventListener("click", editorClick);
-$("indList").addEventListener("change", e => {
+const onEditorChange = e => {
   const tg = e.target.closest("input[data-target]");
   if (tg) {
     const m = INDICATORS[Number(tg.dataset.target)]; if (!m) return;
@@ -768,7 +800,9 @@ $("indList").addEventListener("change", e => {
   if (!m || !name) { renderEditor(); return; }
   m.name = name; if (m.short) delete m.short;
   applyIndicators(true);
-});
+};
+$("indList").addEventListener("change", onEditorChange);
+$("numList").addEventListener("change", onEditorChange);
 let newKind = "scale";
 $("newKind").onclick = e => {
   const b = e.target.closest("button"); if (!b) return;
