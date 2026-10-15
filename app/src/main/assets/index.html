@@ -552,10 +552,16 @@ function renderChart(m) {
   if (hi - lo < 2) { const c = (hi + lo) / 2; lo = c - 1; hi = c + 1; }
   const step = [0.5, 1, 2, 5, 10, 20].find(s => (hi - lo) / s <= 5) || 50;
   lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
-  const W = cv.clientWidth || 340, H = 190, L = 36, R = 8, T = 10, B = 24;
+  // keep the target off the edges so its label has room
+  if (m.target != null && m.target - lo < step * 0.5) lo -= step;
+  if (m.target != null && hi - m.target < step * 0.5) hi += step;
+  // layout of the plot area; window.CHART_LAYOUT is only for trying variants
+  const LAY = window.CHART_LAYOUT || "current";
+  const W = cv.clientWidth || 340, H = 190, T = 10, B = 24;
+  const L = { current: 36, A: 4, B: 30, C: 4 }[LAY], R = { current: 8, A: 4, B: 4, C: 30 }[LAY];
   const X = t => L + (t - start) / (end - start) * (W - L - R), Y = v => T + (hi - v) / (hi - lo) * (H - T - B);
   let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(m.name)} chart"><defs><clipPath id="cp-${m.key}"><rect x="${L}" y="0" width="${W - L - R}" height="${H}"/></clipPath></defs>`;
-  for (let v = lo; v <= hi + 1e-9; v += step) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text class="ax" x="${L - 6}" y="${Y(v) + 3.5}" text-anchor="end">${+v.toFixed(1)}</text>`;
+  for (let v = lo; v <= hi + 1e-9; v += step) if (m.target == null || Math.abs(v - m.target) > step * 0.3) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text class="ax" ${LAY === "A" ? `x="${L + 2}" y="${Y(v) - 4}" text-anchor="start"` : LAY === "C" ? `x="${W - R + 5}" y="${Y(v) + 3.5}" text-anchor="start"` : `x="${L - 6}" y="${Y(v) + 3.5}" text-anchor="end"`}>${+v.toFixed(1)}</text>`;
   // x labels: years, months or days depending on the span
   const days = end - start, ticks = [];
   for (let t = Math.ceil(start); t <= end; t++) {
@@ -574,7 +580,8 @@ function renderChart(m) {
   const r = visD.length > 400 ? 1.6 : visD.length > 120 ? 2.2 : 3;
   for (const [t, v] of visD) svg += `<circle cx="${X(t).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${r}" fill="#cfdcb4" stroke="#71a993" stroke-width=".8" opacity=".8"/>`;
   if (visL.length) svg += `<polyline fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${visL.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ")}"/>`;
-  if (m.target != null) svg += `<line x1="${L}" x2="${W - R}" y1="${Y(m.target)}" y2="${Y(m.target)}" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="4 4"/><text class="ax" x="${W - R - 2}" y="${Y(m.target) - 5}" text-anchor="end" style="fill:var(--warn)">Target ${m.target}</text>`;
+  // target: the word "Target" at the far left, the dashed line running on from just after it
+  if (m.target != null) svg += `<text class="ax" x="${L + 2}" y="${Y(m.target) + 3.5}" text-anchor="start" style="fill:var(--warn)">Target</text><line x1="${L + 44}" x2="${W - R}" y1="${Y(m.target)}" y2="${Y(m.target)}" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
   svg += `<line class="tipline" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--ink)" stroke-width="1" opacity=".35" style="display:none"/></g></svg>`;
   cv.innerHTML = svg;
   cv._state = { line: visL.filter(p => p[0] >= start), X, view: CH.view };
