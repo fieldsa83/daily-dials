@@ -103,8 +103,8 @@ final class Vitamins {
                 .setSmallIcon(R.drawable.ic_notif_vit)
                 .setColor(0xFF66BB57)
                 .setShowWhen(true)
-                .setContentTitle(followUp ? "Multivitamins not marked yet" : "Multivitamins")
-                .setContentText(followUp ? "Did you take them today?" : "Time to take your multivitamins.")
+                .setContentTitle("Take multivitamins")
+                .setSubText(followUp ? "not marked yet" : null)   // one line: the follow-ups just add a note beside the app name
                 .setContentIntent(PendingIntent.getActivity(c, 30, new Intent(c, MainActivity.class), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT))
                 .setAutoCancel(true)
                 .addAction(action("Done", broadcast(c, ACTION_DONE, 22)))
