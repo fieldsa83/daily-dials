@@ -172,7 +172,7 @@ body::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height
 .tabs button span { display: none; }
 .tabs button[aria-selected="true"] { background: color-mix(in srgb, var(--good) 40%, var(--surface)); color: var(--ink); }
 /* the weight tab and its dial use the chart line's navy; the bubble is pale blue until confirmed */
-#tb-weight[aria-selected="true"] { background: #1f4e79; color: #fff; }
+#tb-weight[aria-selected="true"] { background: var(--ch-dot); color: #1f2c3a; }   /* the chart dots' light blue */
 #ru-weight .needle { background: #1f4e79; }
 #ru-weight .bub { --bub: #c9d8e8; }
 #ru-weight .bub.set { --bub: #1f4e79; }
