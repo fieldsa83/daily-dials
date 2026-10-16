@@ -100,7 +100,7 @@ final class Vitamins {
 
     static void show(Context c, boolean followUp) {
         Notification.Builder b = new Notification.Builder(c, channel(c))
-                .setSmallIcon(R.drawable.ic_notif)
+                .setSmallIcon(R.drawable.ic_notif_vit)
                 .setColor(0xFF66BB57)
                 .setShowWhen(true)
                 .setContentTitle(followUp ? "Multivitamins not marked yet" : "Multivitamins")
