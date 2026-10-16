@@ -47,9 +47,10 @@ final class Sync {
                         if (batches) {
                             org.json.JSONArray list = new org.json.JSONArray();
                             java.util.List<String> sent = new java.util.ArrayList<>();
+                            java.util.Map<String, String> sentAs = new java.util.HashMap<>();
                             for (int j = i; j < dates.size() && sent.size() < 300; j++) {
                                 JSONObject entry = store.get(dates.get(j));
-                                if (entry != null) list.put(entry);
+                                if (entry != null) { list.put(entry); sentAs.put(dates.get(j), entry.toString()); }
                                 sent.add(dates.get(j));
                             }
                             JSONObject body = new JSONObject();
@@ -57,7 +58,7 @@ final class Sync {
                             body.put("entries", list);
                             JSONObject res = parse(http(url, body.toString()));
                             if (res.optBoolean("ok")) {
-                                for (String d : sent) store.clearPending(d);
+                                for (String d : sent) store.clearPendingIfSame(d, sentAs.get(d));
                                 i += sent.size();
                                 continue;
                             }
@@ -73,9 +74,10 @@ final class Sync {
                         JSONObject body = new JSONObject();
                         body.put("action", "save");
                         body.put("entry", entry);
+                        String sentJson = entry.toString();
                         JSONObject res = parse(http(url, body.toString()));
                         if (!res.optBoolean("ok")) throw new IOException(res.optString("error", "the sheet refused the entry"));
-                        store.clearPending(date);
+                        store.clearPendingIfSame(date, sentJson);
                     }
                     JSONObject res = parse(http(withParam(url, "action=all"), null));
                     if (!res.optBoolean("ok")) throw new IOException(res.optString("error", "the sheet refused the request"));
@@ -88,6 +90,8 @@ final class Sync {
                             if (stillPending.contains(date)) continue;
                             JSONObject r = remote.getJSONObject(date);
                             JSONObject l = store.get(date);
+                            // keep a phone entry that was changed more recently than the sheet's copy
+                            if (l != null && l.optString("updatedAt").compareTo(r.optString("updatedAt")) > 0) { if (!l.toString().equals(r.toString())) store.put(date, l, true); continue; }
                             if (l == null || !l.toString().equals(r.toString())) {
                                 store.put(date, r, false);
                                 changed = true;

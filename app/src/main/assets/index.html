@@ -134,7 +134,7 @@ footer { font-size: .78rem; color: var(--muted); }
 .check input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; flex: none; }
 .check input[type=time] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: .4rem .6rem; margin-left: auto; }
 /* number dial (weight): a ruler you drag sideways; the value rides in a green bubble over the needle; each tick is 0.1 */
-.rul { position: relative; height: 130px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: ew-resize; }
+.rul { position: relative; height: 130px; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: ew-resize; }
 .rul::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, var(--surface), transparent 20%, transparent 80%, var(--surface)); }
 .rul:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
 .tk { position: absolute; top: 66px; border-radius: 2px; }
@@ -396,9 +396,16 @@ function setupRuler(m) {
   const el = $(`ru-${m.key}`);
   const r = { el, t: 0, set: false, drag: null };
   rulers.set(m.key, r);
-  el.addEventListener("pointerdown", e => { r.drag = { x: e.clientX, t: r.t, moved: false, onBubble: !!e.target.closest(".bub") }; el.setPointerCapture?.(e.pointerId); });
+  el.addEventListener("pointerdown", e => { r.drag = { x: e.clientX, y: e.clientY, t: r.t, moved: false, live: false, onBubble: !!e.target.closest(".bub") }; el.setPointerCapture?.(e.pointerId); });
   el.addEventListener("pointermove", e => {
     if (!r.drag) return;
+    // only a clearly sideways drag moves the ruler, so scrolling the page past it can't nudge the weight
+    if (!r.drag.live) {
+      const dx = Math.abs(e.clientX - r.drag.x), dy = Math.abs(e.clientY - r.drag.y);
+      if (dy > 10 && dy > dx) { r.drag = null; return; }
+      if (dx < 10 || dx < dy) return;
+      r.drag.live = true; r.drag.x = e.clientX;
+    }
     const n = Math.max(0, r.drag.t + Math.round((r.drag.x - e.clientX) / PX));
     if (n !== r.t) { r.drag.moved = true; drawRuler(m, n, true); if (App?.tick) App.tick(); else if (navigator.vibrate) navigator.vibrate(4); }   // a click per notch
   });
@@ -980,7 +987,18 @@ loadIndicators().then(list => {
   INDICATORS = Array.isArray(list) ? list : [];
   applyIndicators(false);
   let t = "checkin"; try { t = localStorage.getItem("dailydials.tab") || "checkin"; } catch {}
+  if (morningWeight()) t = "weight";
   if (t === "settings" || (t === "weight" && !$("tb-weight").hidden)) showTab(t);
 });
+// Between 4 AM and noon, opening the app goes straight to Weight until today's weight is in.
+function morningWeight() {
+  const h = new Date().getHours(), w = METRICS.find(m => !isScale(m));
+  return h >= 4 && h < 12 && w && !$("tb-weight").hidden && !(has(entries[todayIso()]?.[w.key]) && Number(entries[todayIso()]?.[`${w.key}_carried`]) !== 1);
+}
+{ let away = 0;   // coming back to the app after 10+ minutes counts as opening it
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { away = Date.now(); return; }
+    if (away && Date.now() - away > 10 * 60e3 && morningWeight()) { current = todayIso(); renderDay(); showTab("weight"); }
+  }); }
 </script>
 </body></html>

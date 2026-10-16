@@ -181,6 +181,12 @@ final class Store {
         pending.edit().remove(date).apply();
     }
 
+    /** Marks a day as synced only if it hasn't changed since it was sent (a change made mid-sync stays pending). */
+    synchronized void clearPendingIfSame(String date, String sentJson) {
+        JSONObject now = get(date);
+        if (now == null || sentJson == null || now.toString().equals(sentJson)) pending.edit().remove(date).apply();
+    }
+
     String url() { return settings.getString("url", ""); }
     int hour() { return settings.getInt("hour", 19); }
     int minute() { return settings.getInt("minute", 0); }
