@@ -57,8 +57,25 @@ public class ReminderReceiver extends BroadcastReceiver {
                 break;
             }
 
+            case Vitamins.ACTION_REMIND:
+                Vitamins.remind(c);
+                break;
+
+            case Vitamins.ACTION_SNOOZE:
+                Vitamins.snooze(c);
+                break;
+
+            case Vitamins.ACTION_DONE:
+            case Vitamins.ACTION_SKIP: {
+                Vitamins.answer(c, Vitamins.ACTION_DONE.equals(action) ? 1 : 0);
+                PendingResult pr = goAsync();
+                Sync.run(c, (status, changed) -> pr.finish());
+                break;
+            }
+
             default: // boot, app update
                 Reminder.schedule(c);
+                Vitamins.schedule(c);
         }
     }
 }

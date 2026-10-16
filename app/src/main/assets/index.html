@@ -103,6 +103,14 @@ h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 
 .tchart svg text { font: .62rem var(--body); fill: var(--muted); }
 .tbar { cursor: pointer; }
 .tr-chips { justify-content: flex-start; margin-top: .4rem; }
+/* multivitamins: one done / not-done a day, a small card above the dials */
+.vit[hidden] { display: none; }
+.vit { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: .8rem 1rem; }
+.vit .nm { font: 500 1rem var(--display); }
+.vit .nm small { display: block; font: 400 .78rem var(--body); color: var(--muted); }
+.vit button { border: 0; border-radius: 12px; height: 46px; padding: 0 18px; font: 700 .95rem var(--body); background: var(--empty); color: var(--ink); cursor: pointer; transition: transform .15s, box-shadow .15s, background .15s; }
+.vit button.on { background: var(--good-deep); transform: translateY(-2px); box-shadow: 0 6px 14px rgba(60, 40, 30, .22); }
+.vit button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tbub { position: absolute; z-index: 5; background: var(--ink); color: var(--surface); border-radius: 9px; padding: 5px 9px; font-size: .76rem; line-height: 1.3; white-space: nowrap; pointer-events: none; transform: translate(-50%, -100%); }
 .tbub::after { content: ""; position: absolute; left: var(--ax, 50%); bottom: -5px; margin-left: -5px; border: 5px solid transparent; border-bottom: 0; border-top-color: var(--ink); }
 .tbub b { font-size: .88rem; }
@@ -233,6 +241,8 @@ body.on-settings header { display: none; }
     <div class="tpages" id="tPages"></div>
   </section>
 
+  <section class="panel vit" id="vit" aria-label="Multivitamins"><span class="nm">Multivitamins<small id="vitSub">Not yet today</small></span><button id="vitBtn" aria-pressed="false">Mark done</button></section>
+
   <section class="dials" id="dials" aria-label="Ratings"></section>
 
   <div class="note">
@@ -284,6 +294,8 @@ body.on-settings header { display: none; }
       </div>
       <div class="row" id="pauseRow"><button class="btn ghost" data-days="3">Pause 3 days</button><button class="btn ghost" data-days="7">Pause 1 week</button><button class="btn ghost" data-days="-1">Pause until I turn it on</button><button class="btn ghost" data-days="0" id="resume" hidden>Resume</button></div>
       <p class="hint" id="nextRem"></p>
+      <div class="check"><input type="checkbox" id="vitOn" checked><label for="vitOn">Multivitamin reminder</label><input type="time" id="vitTime" value="12:15" aria-label="Multivitamin reminder time"></div>
+      <p class="hint">If it isn't marked done, it reminds you again at 6 PM and a last time at 7 PM.</p>
       <div class="row"><button class="btn" id="saveSettings">Save reminders</button><button class="btn ghost" id="testRem">Show test reminder</button></div>
     </div>
   </section>
@@ -423,6 +435,13 @@ function setupRuler(m) {
     setNumber(m.key, (r.t + (e.key === "ArrowRight" ? 1 : -1)) / 10);
   });
 }
+let vitOn = true;   // the multivitamin reminder is on (from settings)
+$("vitBtn").onclick = () => {
+  const cur = { ...(entries[current] || {}) };
+  if (cur.vitamins === 1) delete cur.vitamins; else cur.vitamins = 1;   // tap again to undo
+  entries[current] = cur;
+  renderDay(); renderHistory(); queueSave();
+};
 function setNumber(key, v) {
   const cur = { ...(entries[current] || {}) };
   // <key>_carried: 0 = entered by hand, 1 = carried forward from an earlier day, absent = no value at all
@@ -450,6 +469,11 @@ $("next").onclick = () => { if (current < todayIso()) { flush(); current = shift
 
 function renderDay() {
   $("dayLabel").textContent = longDay(current);
+  { const v = entries[current]?.vitamins, done = v === 1;
+    $("vit").hidden = !vitOn && !has(v);
+    $("vitBtn").textContent = done ? "Done" : "Mark done";
+    $("vitBtn").classList.toggle("on", done); $("vitBtn").setAttribute("aria-pressed", String(done));
+    $("vitSub").textContent = done ? (current === todayIso() ? "Taken today" : "Taken") : v === 0 ? "Skipped" : current === todayIso() ? "Not yet today" : "Not marked"; }
   $("next").disabled = current >= todayIso();
   const e = entries[current] || {};
   for (const m of METRICS) {
@@ -493,6 +517,18 @@ function renderHistory() {
       grid += `<button class="cell" data-k="${m.key}" data-d="${d}" aria-label="${esc(m.name)}, ${esc(longDay(d))}: ${has(v) ? v : "no entry"}"${has(v) ? ` style="background:${colour(goodness(m, v))}"` : ""}></button>`;
     });
     grid += pill(m, mean(m.key, days.slice(7)));
+  }
+  // multivitamins: green on days taken, and how many of the 7 days in each week's pill
+  if (vitOn || days.some(d => has(entries[d]?.vitamins))) {
+    const cnt = ds => ds.filter(d => entries[d]?.vitamins === 1).length;
+    const vpill = ds => { const n = cnt(ds); return `<div class="av" style="--c:${colour(n / 7)}">${n}/7</div>`; };
+    grid += `<div class="lbl">Vitamins</div>`;
+    days.forEach((d, j) => {
+      if (j === 7) grid += vpill(days.slice(0, 7)) + `<div></div>`;
+      const v = entries[d]?.vitamins;
+      grid += `<button class="cell" data-k="vitamins" data-d="${d}" aria-label="Vitamins, ${esc(longDay(d))}: ${v === 1 ? "taken" : "not taken"}"${v === 1 ? ` style="background:${STOPS[5]}"` : ""}></button>`;
+    });
+    grid += vpill(days.slice(7));
   }
   const wk = (a, b) => `${shortDay(a)} – ${md(b).getDate()}`;
   const page0 = `<div><div class="grid-wrap"><div class="grid">${grid}</div></div>
@@ -564,6 +600,12 @@ let tbub = null, tsel = null;
 function trendBubble(t) {
   if (tbub) tbub.remove(); if (tsel) tsel.classList.remove("sel"); tbub = tsel = null;
   if (!t) return;
+  if (t.dataset.k === "vitamins") {
+    const card = $("trend"), v = entries[t.dataset.d]?.vitamins; tsel = t; t.classList.add("sel");
+    tbub = document.createElement("div"); tbub.className = "tbub";
+    tbub.innerHTML = `${esc(longDay(t.dataset.d))}<br><b>Vitamins ${v === 1 ? "taken" : v === 0 ? "skipped" : "not marked"}</b>`;
+    card.append(tbub); placeBubble(t); return;
+  }
   const m = METRICS.find(x => x.key === t.dataset.k), d = t.dataset.d, e2 = t.dataset.e;
   if (e2 && e2 !== d) {   // a week or month bar: show its span and average
     const card = $("trend"); tsel = t; t.classList.add("sel");
@@ -795,6 +837,9 @@ function loadSettings() {
     $("nudge").checked = st.nudge !== false;
     setDays(st.days ?? 127);
     setAlert(st.alert || "silent");
+    $("vitOn").checked = st.vitOn !== false;
+    $("vitTime").value = `${pad(st.vitHour ?? 12)}:${pad(st.vitMinute ?? 15)}`;
+    vitOn = st.vitOn !== false; renderDay(); renderHistory();
     showNext(st.next, st.pausedUntil);
     $("sheetUrl").value = st.url || "";
     $("syncStatus").textContent = st.status || (st.url ? "Connected to your sheet." : "Not connected to a sheet yet. Entries are saved on this phone.");
@@ -836,7 +881,9 @@ $("saveSettings").onclick = $("saveLink").onclick = (ev) => {
   const [h, m] = hm($("remTime").value, "19:00");
   const [wh, wm] = hm($("weekendTime").value, "10:00");
   App.setSettings(JSON.stringify({ hour: h, minute: m, url: $("sheetUrl").value.trim(), days,
-    weekendOn: $("weekendOn").checked, weekendHour: wh, weekendMinute: wm, nudge: $("nudge").checked, alert: alertStyle }));
+    weekendOn: $("weekendOn").checked, weekendHour: wh, weekendMinute: wm, nudge: $("nudge").checked, alert: alertStyle,
+    vitOn: $("vitOn").checked, vitHour: hm($("vitTime").value, "12:15")[0], vitMinute: hm($("vitTime").value, "12:15")[1] }));
+  vitOn = $("vitOn").checked; renderDay(); renderHistory();
   try { const st = JSON.parse(App.getSettings()); showNext(st.next, st.pausedUntil); } catch {}
   if (ev && ev.currentTarget && ev.currentTarget.id === "saveLink") { $("syncStatus").textContent = "Link saved. Syncing…"; App.syncNow(); }
   else $("nextRem").textContent = "Saved. " + $("nextRem").textContent;

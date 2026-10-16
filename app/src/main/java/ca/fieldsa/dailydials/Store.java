@@ -203,6 +203,10 @@ final class Store {
     int weekendHour() { return settings.getInt("weekendHour", 10); }
     int weekendMinute() { return settings.getInt("weekendMinute", 0); }
     boolean nudge() { return settings.getBoolean("nudge", true); }
+    // Multivitamin reminder
+    boolean vitOn() { return settings.getBoolean("vitOn", true); }
+    int vitHour() { return settings.getInt("vitHour", 12); }
+    int vitMinute() { return settings.getInt("vitMinute", 15); }
     /** "silent", "vibrate" or "sound". */
     String alert() { return settings.getString("alert", "silent"); }
     /** No reminders before this time (milliseconds); 0 = not paused, -1 = until turned back on. */
@@ -221,6 +225,9 @@ final class Store {
                 .putInt("weekendMinute", o.optInt("weekendMinute", 0))
                 .putBoolean("nudge", o.optBoolean("nudge", true))
                 .putString("alert", o.optString("alert", "silent"))
+                .putBoolean("vitOn", o.optBoolean("vitOn", vitOn()))
+                .putInt("vitHour", o.optInt("vitHour", vitHour()))
+                .putInt("vitMinute", o.optInt("vitMinute", vitMinute()))
                 .apply();
     }
 
@@ -240,5 +247,8 @@ final class Store {
         o.put("nudge", nudge());
         o.put("alert", alert());
         o.put("pausedUntil", pausedUntil());
+        o.put("vitOn", vitOn());
+        o.put("vitHour", vitHour());
+        o.put("vitMinute", vitMinute());
     }
 }

@@ -76,6 +76,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         js("window.reloadEntries && window.reloadEntries(false)");
+        Vitamins.schedule(this);
         syncNow();
     }
 
@@ -133,6 +134,7 @@ public class MainActivity extends Activity {
                 return;
             }
             if (date.equals(Store.today()) && Reminder.nextUnanswered(store, date, 0) < 0) Reminder.cancel(MainActivity.this);
+            Vitamins.onSaved(MainActivity.this, date);
             runOnUiThread(MainActivity.this::syncLater);
         }
 
@@ -182,6 +184,7 @@ public class MainActivity extends Activity {
                 return;
             }
             Reminder.schedule(MainActivity.this);
+            Vitamins.schedule(MainActivity.this);
             runOnUiThread(MainActivity.this::syncNow);
         }
 
