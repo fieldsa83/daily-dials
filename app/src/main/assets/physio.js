@@ -745,6 +745,14 @@ var hostRenderDay=renderDay;
 renderDay=function(){hostRenderDay.apply(this,arguments);if(currentTab==='physio')show();};
 var hostReload=window.reloadEntries;
 window.reloadEntries=function(goToday){hostReload(goToday);loadProgram();if(currentTab==='physio')show();};
+/* the phone's back button or swipe: close the open panel or screen first */
+window.onBack=function(){
+  if(currentTab!=='physio')return false;
+  if(UI.sheet){UI.sheet=null;render();return true;}
+  if(UI.planOpen){UI.planOpen=false;render();return true;}
+  if(UI.screen==='program'){UI.screen='tab';UI.edit=null;UI.paste=false;UI.copyBox=null;render();window.scrollTo(0,0);return true;}
+  return false;
+};
 window.Physio={show:show,reloadProgram:function(){loadProgram();if(currentTab==='physio')show();}};
 loadMeta();loadProgram();
 app=document.getElementById('physioApp');

@@ -92,6 +92,18 @@ public class MainActivity extends Activity {
         js("window.openDay && window.openDay(" + JSONObject.quote(date) + ")");
     }
 
+    /** Back (button or swipe) first closes whatever the page has open, like a Physio panel; only then leaves the app. */
+    @Override
+    public void onBackPressed() {
+        if (web == null) {
+            super.onBackPressed();
+            return;
+        }
+        web.evaluateJavascript("(window.onBack && window.onBack()) ? 'y' : 'n'", v -> {
+            if (!"\"y\"".equals(v)) MainActivity.super.onBackPressed();
+        });
+    }
+
     private void syncLater() {
         handler.removeCallbacks(syncSoon);
         handler.postDelayed(syncSoon, 2000);
