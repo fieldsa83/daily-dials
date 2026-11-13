@@ -261,5 +261,5 @@
 #tab-physio .phase .psub{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.8;margin-top:6px}
 #tab-physio .phase .plist{margin:2px 0 0;padding-left:1.1em;font-size:13.5px;line-height:1.45;display:flex;flex-direction:column;gap:2px}
 #tab-physio .phase .prw{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-#tab-physio .phase .plist b,#tab-physio .phase .ex b{font:700 inherit/inherit var(--body);font-size:inherit}
+#tab-physio .phase .plist b,#tab-physio .phase .ex b{font-family:var(--body);font-size:inherit;font-weight:700;line-height:inherit}
 #tab-physio .phase .prw b{font:500 17px var(--display)}
