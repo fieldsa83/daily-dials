@@ -1,6 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Daily Dials Check-in</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="physio.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
 <style>
 /* Layout: one narrow column — today's four dials, then a 28-day grid and weekly averages */
@@ -166,7 +167,7 @@ footer { font-size: .78rem; color: var(--muted); }
 /* the page fades into the background behind the tab bar, so nothing busy shows around or under it */
 body::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(120px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 45%, transparent); pointer-events: none; z-index: 9; }
 /* icons only; the current tab is a soft green capsule with its name beside the icon. Every tab is the same width. */
-.tabs button { flex: none; width: 108px; min-height: 50px; border: 0; border-radius: 24px; background: transparent; color: var(--muted); font: 700 .85rem var(--body); cursor: pointer;
+.tabs button { flex: none; width: 80px; min-height: 50px; border: 0; border-radius: 24px; background: transparent; color: var(--muted); font: 700 .85rem var(--body); cursor: pointer;
   display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px; transition: background .15s, color .15s; }
 .tabs button svg { width: 22px; height: 22px; flex: none; }
 .tabs button span { display: none; }
@@ -261,6 +262,10 @@ body.on-settings header { display: none; }
     <section class="dials" id="numDials" aria-label="Numbers"></section>
   </div>
 
+  <div class="tab" id="tab-physio" role="tabpanel" aria-labelledby="tb-physio" hidden>
+    <div class="app" id="physioApp"></div>
+  </div>
+
   <div class="tab" id="tab-settings" role="tabpanel" aria-labelledby="tb-settings" hidden>
   <section class="panel settings" id="indicators">
     <h2>Indicators</h2>
@@ -320,6 +325,7 @@ body.on-settings header { display: none; }
 <nav class="tabs" role="tablist" aria-label="Sections">
   <button role="tab" id="tb-checkin" data-tab="checkin" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg><span>Check-in</span></button>
   <button role="tab" id="tb-weight" data-tab="weight" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19h16"/><path d="M6 15l4-5 3 3 5-6"/></svg><span id="tb-weight-label">Weight</span></button>
+  <button role="tab" id="tb-physio" data-tab="physio" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 8v6M7 11l5-2 5 2M9 21l3-7 3 7"/></svg><span>Physio</span></button>
   <button role="tab" id="tb-settings" data-tab="settings" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
 </nav>
 <script>
@@ -641,7 +647,7 @@ document.addEventListener("click", e => { if (tbub && !$("trend").contains(e.tar
 let currentTab = "checkin";
 function showTab(name) {
   currentTab = name;
-  for (const t of ["checkin", "weight", "settings"]) {
+  for (const t of ["checkin", "weight", "physio", "settings"]) {
     $(`tab-${t}`).hidden = t !== name;
     $(`tb-${t}`).setAttribute("aria-selected", String(t === name));
   }
@@ -650,6 +656,7 @@ function showTab(name) {
   window.scrollTo(0, 0);
   try { localStorage.setItem("dailydials.tab", name); } catch {}
   if (name === "weight") { renderDay(); renderCharts(); }
+  if (name === "physio" && window.Physio) Physio.show();
 }
 document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab); });
 
@@ -1039,7 +1046,7 @@ loadIndicators().then(list => {
   applyIndicators(false);
   let t = "checkin"; try { t = localStorage.getItem("dailydials.tab") || "checkin"; } catch {}
   if (morningWeight()) t = "weight";
-  if (t === "settings" || (t === "weight" && !$("tb-weight").hidden)) showTab(t);
+  if (t === "settings" || t === "physio" || (t === "weight" && !$("tb-weight").hidden)) showTab(t);
 });
 // Between 4 AM and noon, opening the app goes straight to Weight until today's weight is in.
 function morningWeight() {
@@ -1052,4 +1059,5 @@ function morningWeight() {
     if (away && Date.now() - away > 10 * 60e3 && morningWeight()) { current = todayIso(); renderDay(); showTab("weight"); }
   }); }
 </script>
+<script src="physio.js"></script>
 </body></html>

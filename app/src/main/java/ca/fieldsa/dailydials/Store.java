@@ -91,6 +91,22 @@ final class Store {
         put(date, e, true);
     }
 
+    // ---- physio program (rows of the sheet's Program tab), edited in the app or the sheet
+
+    /** The program as a JSON array of rows, or "" when the app still uses its built-in default. */
+    String programJson() { return settings.getString("program", ""); }
+
+    boolean programPending() { return settings.getBoolean("programPending", false); }
+
+    void setProgram(String json, boolean needsSync) {
+        settings.edit().putString("program", json).putBoolean("programPending", needsSync).apply();
+    }
+
+    /** Marks the program as synced only if it hasn't changed since it was sent. */
+    synchronized void clearProgramPendingIfSame(String sent) {
+        if (programJson().equals(sent)) settings.edit().putBoolean("programPending", false).apply();
+    }
+
     // ---- indicators (the dials), editable in the app
 
     /** The indicator list as JSON: the edited one, or the defaults in assets/indicators.json. */

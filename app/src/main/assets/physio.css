@@ -1,0 +1,248 @@
+#tab-physio{--bg:#ebdfd2;--card:#faf5ef;--line:#ddd0c1;--line2:#eee3d6;--fg:#3a2d24;--mut:#7a6a5e;--mut2:#5b4a3e;--chip:#f1e8dd;--soft:#ece1d4;
+  --green:#66bb57;--lgreen:#dbe9d3;--amber:#e8b34f;--lamber:#f3dcb0;--empty:#e6d9cb;--fig:#3a2d24;--far:#b9a99a;--floor:#cdbfb0;
+  --head:'Bricolage Grotesque',system-ui,sans-serif;color:var(--fg)}
+#tab-physio button{font-family:inherit;color:inherit;cursor:pointer}
+#tab-physio .app{display:flex;flex-direction:column;gap:11px}
+#tab-physio button{font-family:inherit;color:inherit;cursor:pointer}
+#tab-physio button:focus-visible,
+#tab-physio a:focus-visible,
+#tab-physio input:focus-visible,
+#tab-physio textarea:focus-visible{outline:3px solid #6b4f3f;outline-offset:2px}
+#tab-physio .app{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:11px}
+#tab-physio h1{margin:0;font:500 26px var(--head)}
+#tab-physio .top{display:flex;align-items:center;justify-content:space-between;padding:0 4px}
+#tab-physio .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+#tab-physio .lbl{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+#tab-physio .small{font-size:12px;color:var(--mut)}
+#tab-physio .pill{min-height:44px;padding:0 18px;border:0;border-radius:22px;background:var(--fg);color:var(--card);font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:7px}
+#tab-physio .ghost{min-height:40px;padding:0 14px;border:0;border-radius:20px;background:transparent;box-shadow:inset 0 0 0 1px var(--far);font-weight:700;font-size:14px}
+#tab-physio .link{border:0;background:none;padding:6px 0;min-height:36px;font-weight:700;font-size:13px;color:#6b4f3f;text-decoration:underline;text-underline-offset:3px}
+#tab-physio .prw{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#tab-physio .week{display:flex;align-items:center;gap:16px}
+#tab-physio .banner{border-radius:12px;padding:10px 14px;font-size:14px}
+#tab-physio .mv{display:flex;justify-content:space-between;gap:10px;font-size:14px;border-top:1px solid var(--line2);padding-top:7px}
+#tab-physio .mv b{min-width:0}
+#tab-physio .mv span{color:var(--mut);white-space:nowrap}
+#tab-physio .sugg{background:var(--lgreen);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+#tab-physio .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+#tab-physio .chip{min-height:44px;border-radius:12px;border:0;padding:0 6px;font-size:13px;font-weight:700;background:var(--chip);box-shadow:inset 0 0 0 1px var(--line)}
+#tab-physio .chip[aria-pressed="true"]{background:var(--green);color:#fff;box-shadow:none}
+#tab-physio details summary{cursor:pointer;font-size:13px;font-weight:700;color:#6b4f3f;min-height:32px;display:flex;align-items:center}
+#tab-physio .how{margin:4px 0 0;padding-left:1.1em;font-size:13px;color:var(--mut2);display:flex;flex-direction:column;gap:4px}
+#tab-physio .strip{display:flex;gap:3px}
+#tab-physio .dcol{width:20px;display:flex;flex-direction:column;align-items:center;gap:2px}
+#tab-physio .dsq{width:20px;height:22px;border-radius:5px;background:var(--empty);color:#fff;font:700 11px var(--head);display:grid;place-items:center}
+#tab-physio .ddot{width:6px;height:6px;border-radius:50%}
+#tab-physio .hist{display:flex;flex-direction:column}
+#tab-physio .hrow{border-top:1px solid var(--line2);padding:2px 0}
+#tab-physio .hrow summary{font-size:14px;min-height:40px;color:var(--fg);font-weight:400;justify-content:space-between}
+#tab-physio .hrow ul{margin:0 0 8px;padding-left:1.1em;font-size:13px;color:var(--mut2)}
+#tab-physio .danger{color:#9a3b22}
+#tab-physio /* session */
+.bars{display:flex;gap:5px;padding:0 4px}
+#tab-physio .bars button{flex:1;height:14px;border:0;background:none;padding:4px 0;display:flex}
+#tab-physio .bars button span{flex:1;border-radius:3px;background:#d4c6b6}
+#tab-physio .bars button.on span{background:#6b4f3f}
+#tab-physio .stage{min-height:236px;display:flex;flex-direction:column;justify-content:center;padding:8px 10px 6px}
+#tab-physio .stage svg{display:block;width:100%;height:200px}
+#tab-physio .plabel{text-align:center;font:500 15px var(--head);min-height:1.3em}
+#tab-physio .noanim{text-align:center;padding:0 20px;display:flex;flex-direction:column;gap:8px;align-items:center;font-size:14px;color:var(--mut2)}
+#tab-physio .noanim a{min-height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:20px;box-shadow:inset 0 0 0 1px var(--far);color:#6b4f3f;font-weight:700;text-decoration:none}
+#tab-physio .step{display:flex;align-items:center;gap:4px}
+#tab-physio .step button{width:40px;height:40px;border-radius:50%;border:0;background:var(--soft);font-size:20px;font-weight:700}
+#tab-physio .step span{width:40px;text-align:center;font:700 20px var(--head)}
+#tab-physio .sets{display:flex;gap:8px;flex-wrap:wrap}
+#tab-physio .set{flex:1;min-width:70px;min-height:44px;border:0;border-radius:12px;font-weight:700;font-size:14px;background:var(--chip);box-shadow:inset 0 0 0 1px var(--line)}
+#tab-physio .set[aria-pressed="true"]{background:var(--green);color:#fff;box-shadow:none}
+#tab-physio .actions{display:flex;gap:8px;padding:0 4px}
+#tab-physio .actions button{min-height:52px;border:0;border-radius:14px;font-weight:700;font-size:15px}
+#tab-physio .feel{min-height:64px;border:0;border-radius:16px;text-align:left;padding:0 18px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+#tab-physio .feel b{font-size:17px}
+#tab-physio .feel span{display:block;font-size:13px;color:var(--mut)}
+#tab-physio .item{display:flex;align-items:center;gap:4px;border-top:1px solid var(--line2);min-height:56px}
+#tab-physio .ibox{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border:0;background:none;text-align:left;padding:8px 4px;min-height:56px}
+#tab-physio .box{flex:none;width:26px;height:26px;border-radius:8px;box-shadow:inset 0 0 0 2px #b9a99a;display:grid;place-items:center;color:#fff}
+#tab-physio .item.on .box{background:var(--green);box-shadow:none}
+#tab-physio .itxt{min-width:0;display:flex;flex-direction:column}
+#tab-physio .itxt b{font-size:15px}
+#tab-physio .isub{font-size:12px;color:var(--mut)}
+#tab-physio .item.on .itxt b{color:var(--mut2)}
+#tab-physio .mini{display:flex;gap:2px}
+#tab-physio .mini button{width:34px;height:34px;border-radius:50%;border:0;background:var(--soft);font-weight:700;font-size:17px}
+#tab-physio .play{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:transparent;box-shadow:inset 0 0 0 1px var(--line);color:#6b4f3f;display:grid;place-items:center}
+#tab-physio .fchips{display:flex;gap:6px}
+#tab-physio .fchip{min-height:36px;padding:0 12px;border:0;border-radius:18px;font-size:13px;font-weight:700;background:var(--chip);box-shadow:inset 0 0 0 1px var(--line)}
+#tab-physio .fchip[aria-pressed="true"].f-easy,
+#tab-physio .fchip[aria-pressed="true"].f-right{background:var(--green);color:#fff;box-shadow:none}
+#tab-physio .fchip[aria-pressed="true"].f-too{background:var(--amber);box-shadow:none}
+#tab-physio .srow.open{background:linear-gradient(var(--card),var(--card))}
+#tab-physio .srow .sopen{gap:8px;justify-content:space-between;padding-right:4px}
+#tab-physio .srow.open .chev{transform:rotate(180deg)}
+#tab-physio .sx{margin:0 12px 8px 16px;padding:4px 0 8px;display:flex;flex-direction:column;gap:6px}
+#tab-physio .ministage{background:#fff8f1;border:1px solid var(--line2);border-radius:12px;padding:4px 6px}
+#tab-physio .ministage svg{display:block;width:100%;height:150px}
+#tab-physio .ministage .plabel{font-size:13px;padding-bottom:2px}
+#tab-physio .xcue{margin:0;font-size:13.5px;color:var(--mut2)}
+#tab-physio .hist2{padding:12px 10px 10px;display:flex;flex-direction:column;gap:6px}
+#tab-physio .hgrid{display:grid;grid-template-columns:58px repeat(14,minmax(0,1fr));gap:2px;align-items:center}
+#tab-physio .hday{border:0;background:transparent;border-radius:6px;padding:2px 0;font-size:10px;font-weight:700;color:var(--mut);min-height:30px;line-height:1.15}
+#tab-physio .hday.sel{background:var(--fg);color:var(--card)}
+#tab-physio .gap{margin-left:4px}
+#tab-physio .hname{font-size:11px;font-weight:700;color:var(--mut2)}
+#tab-physio .hcell{height:22px;border-radius:5px;font:700 10px var(--head);display:grid;place-items:center;overflow:hidden}
+#tab-physio .hsum{font-size:13px;background:var(--chip);border-radius:10px;padding:8px 10px}
+#tab-physio .cbody{padding:0 16px 14px;display:flex;flex-direction:column;gap:8px}
+#tab-physio .pseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--soft);border-radius:12px;padding:4px}
+#tab-physio .pseg button{min-height:40px;border:0;border-radius:9px;font-size:14px;font-weight:700;background:transparent}
+#tab-physio .pseg button[aria-checked="true"],
+#tab-physio .pseg button[aria-selected="true"]{background:var(--card);box-shadow:0 1px 3px rgba(58,45,36,.18)}
+#tab-physio .strc{padding:12px 0 0;overflow:hidden}
+#tab-physio .pbar{margin:8px 16px 4px;height:4px;border-radius:2px;background:var(--soft)}
+#tab-physio .pbar span{display:block;height:4px;border-radius:2px;background:var(--green)}
+#tab-physio .mrow{margin-left:8px}
+#tab-physio .mrow .sopen{gap:12px;padding-left:8px;justify-content:flex-start}
+#tab-physio .mrow .nm{flex:1;text-align:left}
+#tab-physio .thumb{flex:none;width:44px;height:44px;border-radius:12px;background:var(--chip);display:grid;place-items:center}
+#tab-physio .thumb.big{width:48px;height:48px}
+#tab-physio .feelrow{padding:8px 16px 8px;flex-wrap:wrap;border-top:1px solid var(--line2)}
+#tab-physio .planrow{width:100%;border:0;border-top:1px solid var(--line);background:#f4ede4;text-align:left;display:flex;align-items:center;gap:12px;padding:12px 18px;min-height:58px}
+#tab-physio .stbl{display:flex;flex-direction:column;gap:2px}
+#tab-physio .sth,
+#tab-physio .str{display:grid;grid-template-columns:34px 1fr 56px 56px 44px;gap:6px;align-items:center}
+#tab-physio .sth{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);padding:0 2px}
+#tab-physio .sth span:nth-child(3),
+#tab-physio .sth span:nth-child(4){text-align:center}
+#tab-physio .str{border-radius:12px;padding:2px}
+#tab-physio .str.on{background:#eef5e9}
+#tab-physio .sn{font:700 16px var(--head);text-align:center}
+#tab-physio .sl{font-size:13px;color:var(--mut)}
+#tab-physio .sv2{text-align:center;font:700 17px var(--head);background:var(--chip);border-radius:9px;padding:7px 0}
+#tab-physio .str.on .sv2{background:transparent}
+#tab-physio .tickb.sm{width:44px;height:44px}
+#tab-physio .str.on .rc{background:var(--green);box-shadow:none}
+#tab-physio .str.on .rc svg{opacity:1}
+#tab-physio .sfoot2{display:flex;align-items:center;gap:12px}
+#tab-physio .feelbox{display:flex;gap:10px;align-items:flex-start;background:#f4ecf7;border-radius:14px;padding:10px 12px}
+#tab-physio .feelbox .lz{flex:none;margin-top:4px}
+#tab-physio .flbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6a2f80}
+#tab-physio .feelbox p{margin:2px 0 0;font-size:14px;line-height:1.4}
+#tab-physio details.sec summary{font-size:13px;font-weight:700;color:#6b4f3f;min-height:34px;cursor:pointer}
+#tab-physio details.sec p{margin:3px 0 0;font-size:14px}
+#tab-physio .phase{border-radius:16px;padding:12px 14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;gap:4px}
+#tab-physio .phase.on{background:var(--fg);color:var(--card);box-shadow:none}
+#tab-physio .phase b{font:500 17px var(--head)}
+#tab-physio .phase .prw span{font-size:12px;opacity:.8}
+#tab-physio .phase p{margin:0;font-size:13.5px;line-height:1.45}
+#tab-physio .phase .ex{font-size:12.5px;opacity:.8}
+#tab-physio .here{font-size:11px;font-weight:700;color:#a7d99a}
+#tab-physio .rulebox{background:var(--chip);border-radius:16px;padding:12px 14px}
+#tab-physio .rulebox p{margin:4px 0 0;font-size:13.5px;line-height:1.45}
+#tab-physio .ladder{border:1px solid var(--line2);border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+#tab-physio .rung{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mut)}
+#tab-physio .rung .dot{flex:none;width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 2px #cdbfb0}
+#tab-physio .rung.past{color:var(--fg)}
+#tab-physio .rung.past .dot{background:var(--fg);box-shadow:none}
+#tab-physio .rung.now{color:var(--fg);font-weight:700}
+#tab-physio .rung.now .dot{background:var(--green);box-shadow:0 0 0 3px var(--lgreen)}
+#tab-physio .rt{font-size:11px;font-weight:700;color:#2f6b27}
+#tab-physio .tag{flex:none;font-size:11px;font-weight:700;color:#6b4f3f;background:var(--soft);border-radius:8px;padding:3px 7px;white-space:nowrap}
+#tab-physio .scrim{position:fixed;inset:0;background:rgba(40,28,20,.38);z-index:10}
+#tab-physio .scrim.in{animation:fade .18s}
+#tab-physio .sheet{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:480px;max-height:92vh;overflow:auto;z-index:11;background:var(--card);border-radius:20px 20px 0 0;
+  padding:6px 18px calc(env(safe-area-inset-bottom,0px) + 14px);box-shadow:0 -10px 40px rgba(40,28,20,.25);display:flex;flex-direction:column;gap:12px}
+#tab-physio .sheet.in{animation:up .22s ease-out}
+
+@keyframes up{from{transform:translate(-50%,40px);opacity:.4}to{transform:translate(-50%,0);opacity:1}}
+
+@keyframes fade{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){#tab-physio .sheet,
+#tab-physio .scrim{animation:none}}
+#tab-physio .grab{width:40px;height:5px;border-radius:3px;background:var(--line);align-self:center;margin-top:4px}
+#tab-physio .shead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+#tab-physio .shead h2{margin:2px 0 0;font:500 23px var(--head)}
+#tab-physio .xbtn{width:40px;height:40px;border-radius:50%;border:0;background:var(--soft);font-size:22px;flex:none}
+#tab-physio .sec p{margin:3px 0 0;font-size:14px;line-height:1.45}
+#tab-physio .sec .lbl{display:flex;align-items:center}
+#tab-physio .sec details summary{font-size:13px;min-height:34px}
+#tab-physio .sec.log{border-top:1px solid var(--line2);padding-top:10px}
+#tab-physio .sfoot{position:sticky;bottom:0;background:var(--card);padding-top:6px;display:flex;align-items:center;gap:12px}
+#tab-physio .logbtn{flex:1;min-height:52px;border:0;border-radius:14px;background:var(--fg);color:var(--card);font-weight:700;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+#tab-physio .logbtn.on{background:var(--green);color:#fff}
+#tab-physio .pnl{padding:0 8px 0 0}
+#tab-physio .pnl .srow.top{border-top:0;margin-left:16px;padding-right:0}
+#tab-physio .pnl .sopen{gap:8px;justify-content:space-between;padding-right:4px}
+#tab-physio .chev{flex:none;color:var(--mut);transition:transform .15s}
+#tab-physio .pnl.open .chev{transform:rotate(180deg)}
+#tab-physio .pnl.done .rc{background:var(--green);box-shadow:none}
+#tab-physio .pnl.done .rc svg{opacity:1}
+#tab-physio .pnl.done .nm small{color:#2f6b27}
+#tab-physio .vlist{display:flex;flex-direction:column;gap:6px;padding:2px 8px 12px 16px}
+#tab-physio .vitem{display:flex;gap:10px;align-items:flex-start;text-align:left;border:0;border-radius:12px;padding:9px 12px;background:var(--chip);box-shadow:inset 0 0 0 1px var(--line);font-size:14px;min-height:44px}
+#tab-physio .vitem small{display:block;font-size:12.5px;color:var(--mut2);margin-top:1px}
+#tab-physio .vitem[aria-pressed="true"]{background:var(--lgreen);box-shadow:inset 0 0 0 1px #b5d3a8}
+#tab-physio .vb{flex:none;width:20px;height:20px;border-radius:6px;box-shadow:inset 0 0 0 2px #b9a99a;display:grid;place-items:center;margin-top:1px;color:#fff}
+#tab-physio .vitem[aria-pressed="true"] .vb{background:var(--green);box-shadow:none}
+#tab-physio .addload{min-height:42px;padding:0 14px;border:0;border-radius:21px;background:transparent;box-shadow:inset 0 0 0 1px var(--far);font-weight:700;font-size:13px;color:#6b4f3f}
+#tab-physio .lin{width:46px;border:0;background:transparent;font:700 17px var(--head);color:var(--fg);text-align:right;padding:0}
+#tab-physio .lin:focus{outline:2px solid #6b4f3f;border-radius:6px;background:#fff}
+#tab-physio .dhead{display:grid;grid-template-columns:2.5rem 1fr 2.5rem;align-items:center;text-align:center}
+#tab-physio .dhead h1{font-weight:700;font-size:27px;letter-spacing:-.01em}
+#tab-physio .dhead .ch{width:2.5rem;height:2.5rem;border:0;background:none;color:var(--mut);font:400 26px/1 var(--body);opacity:.6;padding:0}
+#tab-physio .dhead .ch:disabled{visibility:hidden}
+#tab-physio .vit{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;user-select:none}
+#tab-physio .nm{font:500 16px var(--head);min-width:0}
+#tab-physio .nm small{display:block;font:400 12.5px var(--body);color:var(--mut)}
+#tab-physio .vit.done>.nm small,
+#tab-physio .srow.done .nm small{color:#2f6b27}
+#tab-physio .rc{width:36px;height:36px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--line);display:grid;place-items:center;flex:none;transition:background .15s,box-shadow .15s}
+#tab-physio .rc svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .15s}
+#tab-physio .vit.done .rc,
+#tab-physio .srow.done .rc{background:var(--green);box-shadow:none}
+#tab-physio .vit.done .rc svg,
+#tab-physio .srow.done .rc svg{opacity:1}
+#tab-physio .howm{padding:0 6px;margin-top:-4px}
+#tab-physio .srow{display:flex;align-items:center;border-top:1px solid var(--line2);margin:0 0 0 16px;padding-right:8px}
+#tab-physio .sopen{flex:1;min-width:0;border:0;background:none;text-align:left;padding:10px 0;min-height:56px;display:flex;align-items:center}
+#tab-physio .tickb{width:52px;height:52px;border:0;background:none;display:grid;place-items:center;padding:0;flex:none}
+#tab-physio .sedit{display:flex;gap:10px;padding:0 16px 10px;flex-wrap:wrap}
+#tab-physio .sr{display:inline-flex;align-items:center;gap:2px;background:var(--chip);border-radius:22px;padding:3px}
+#tab-physio .sr button{width:36px;height:36px;border-radius:50%;border:0;background:var(--card);font-size:18px;font-weight:700;box-shadow:0 0 0 1px var(--line)}
+#tab-physio .sv{min-width:64px;text-align:center;font-size:13px;color:var(--mut2)}
+#tab-physio .sv b{font:700 17px var(--head);color:var(--fg)}
+#tab-physio .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+#tab-physio .day{height:66px;border:0;border-radius:12px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+#tab-physio .day .dn{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
+#tab-physio .day .dd{font:700 16px var(--head);line-height:1}
+#tab-physio .day .dm{font-size:11px;font-weight:700;height:13px;display:flex;align-items:center;gap:1px}
+#tab-physio .day .dmob{font-size:7px;line-height:7px;color:var(--green);letter-spacing:1px}
+#tab-physio .day.str{background:var(--green);color:#fff;box-shadow:none}
+#tab-physio .day.str .dn,
+#tab-physio .day.str .dmob{color:#fff}
+#tab-physio .day.too{background:var(--amber);box-shadow:none}
+#tab-physio .day.sel{outline:3px solid var(--fg);outline-offset:1px}
+#tab-physio .weekline{display:flex;align-items:center;gap:10px;padding:0 4px;font-size:14px;color:var(--mut2)}
+#tab-physio .legend{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;font-size:12px;color:var(--mut2);padding-top:2px}
+#tab-physio .legend span{display:inline-flex;align-items:center;gap:5px}
+#tab-physio .lz{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:4px}
+#tab-physio .lz.work{background:rgba(142,68,173,.35);box-shadow:inset 0 0 0 2px #8e44ad}
+#tab-physio .lz.stretch{box-shadow:inset 0 0 0 2px #3f7fbf;border:0;background:rgba(63,127,191,.1)}
+#tab-physio .notes{display:flex;flex-direction:column;gap:10px;padding:12px 16px}
+#tab-physio .notes p{margin:3px 0 0;font-size:14px}
+#tab-physio .notes .lbl{display:flex;align-items:center}
+#tab-physio /* program */
+.prow{border-top:1px solid var(--line2);padding:8px 0;display:flex;gap:10px;align-items:flex-start;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;font-size:14px}
+#tab-physio .prow.off{color:#9b8b7e}
+#tab-physio .prow .meta{color:var(--mut);font-size:12px}
+#tab-physio .tag{font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;background:var(--lgreen);white-space:nowrap}
+#tab-physio .prow.off .tag{background:var(--soft)}
+#tab-physio .form{display:grid;gap:8px;padding:8px 0 10px}
+#tab-physio .form label{display:grid;gap:3px;font-size:12px;font-weight:700;color:var(--mut)}
+#tab-physio .form input,
+#tab-physio .form textarea,
+#tab-physio textarea.paste{font:15px var(--body);color:var(--fg);padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;width:100%}
+#tab-physio .form .two{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+#tab-physio .form .chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--fg);min-height:40px}
+#tab-physio .form .chk input{width:22px;height:22px;accent-color:var(--green)}
+#tab-physio .btns{display:flex;gap:8px;flex-wrap:wrap}
+#tab-physio textarea.paste{min-height:110px;font-size:13px}
+#tab-physio .status{font-size:13px;color:#6b4a10;background:var(--lamber);border-radius:10px;padding:8px 12px}

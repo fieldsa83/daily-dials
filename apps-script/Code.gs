@@ -21,7 +21,66 @@ const COLUMNS = [
   ['note', 'note'],
   ['updatedAt', 'updated_at'],
 ];
-const TEXT = new Set(['date', 'note', 'updatedAt']);
+// Physio keeps some text in a day's entry: the session letter, how it felt, cardio intensity, and the moves as JSON.
+const TEXT = new Set(['date', 'note', 'updatedAt', 'strength', 'strength_feel', 'cardio_intensity', 'physio_moves']);
+
+// ---- Physio: the Program tab (one row per move) and the Physio_log tab (one row per set, rebuilt from each day's entry)
+const PROGRAM_SHEET = 'Program';
+const PROGRAM_COLUMNS = [['session', 'session'], ['slot', 'slot'], ['exercise', 'exercise'], ['sets', 'sets'], ['reps', 'reps'],
+  ['next', 'next rung'], ['cue', 'cue'], ['active', 'active'], ['load', 'load lb']];
+const LOG_SHEET = 'Physio_log';
+const LOG_HEADER = ['date', 'session', 'slot', 'exercise', 'set', 'reps', 'load lb', 'target', 'feel'];
+
+/** The program as the app keeps it, or null when there is no Program tab yet. */
+function readProgram_() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(PROGRAM_SHEET);
+  if (!sh || sh.getLastRow() < 2) return null;
+  const head = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(h => String(h).trim().toLowerCase());
+  const col = Object.fromEntries(PROGRAM_COLUMNS.map(([k, h]) => [k, head.indexOf(h)]));
+  return sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getDisplayValues()
+    .filter(r => col.exercise >= 0 && r[col.exercise] && !/^daily$/i.test(r[col.session] || ''))
+    .map(r => {
+      const v = k => (col[k] >= 0 ? String(r[col[k]]).trim() : '');
+      return { session: v('session').toUpperCase(), slot: v('slot'), exercise: v('exercise'), sets: Number(v('sets')) || 3, reps: v('reps') || '8-12',
+        next: v('next'), cue: v('cue'), active: !/^(false|no|0|n)$/i.test(v('active')), load: parseFloat(v('load')) || 0 };
+    });
+}
+
+/** Replaces the Program tab with the app's rows (all plain text, so "8-12" never turns into a date). */
+function writeProgram_(rows) {
+  const ss = SpreadsheetApp.getActive();
+  const sh = ss.getSheetByName(PROGRAM_SHEET) || ss.insertSheet(PROGRAM_SHEET);
+  const data = [PROGRAM_COLUMNS.map(c => c[1])].concat(rows.map(r => PROGRAM_COLUMNS.map(([k]) =>
+    k === 'active' ? (r.active ? 'TRUE' : 'FALSE') : k === 'load' ? (Number(r.load) > 0 ? String(r.load) : '') : String(r[k] == null ? '' : r[k]))));
+  sh.clearContents();
+  sh.getRange(1, 1, data.length, PROGRAM_COLUMNS.length).setNumberFormat('@').setValues(data);
+  sh.getRange(1, 1, 1, PROGRAM_COLUMNS.length).setFontWeight('bold');
+  sh.setFrozenRows(1);
+}
+
+/** Rewrites the Physio_log rows for the days just saved, from their physio_moves. */
+function mirrorPhysioLog_(entries) {
+  const days = entries.filter(e => 'physio_moves' in e || 'strength' in e);
+  if (!days.length) return;
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName(LOG_SHEET);
+  if (!sh) { sh = ss.insertSheet(LOG_SHEET); sh.getRange(1, 1, 1, LOG_HEADER.length).setValues([LOG_HEADER]).setFontWeight('bold'); sh.setFrozenRows(1); }
+  const n = sh.getLastRow() - 1;
+  const dates = new Set(days.map(e => e.date));
+  let rows = n > 0 ? sh.getRange(2, 1, n, LOG_HEADER.length).getDisplayValues().filter(r => !dates.has(r[0])) : [];
+  for (const e of days) {
+    let moves = [];
+    try { moves = JSON.parse(e.physio_moves || '[]'); } catch (err) { moves = []; }
+    for (const m of moves) (m.reps || []).forEach((r, i) => {
+      if (r === null || r === '') return;
+      rows.push([e.date, e.strength || '', m.slot || '', m.exercise || '', String(i + 1), String(r), m.load ? String(m.load) : '',
+        (m.reps || []).length + 'x' + (m.lo === m.hi ? m.lo : m.lo + '-' + m.hi), e.strength_feel || '']);
+    });
+  }
+  rows.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  if (n > 0) sh.getRange(2, 1, n, LOG_HEADER.length).clearContent();
+  if (rows.length) sh.getRange(2, 1, rows.length, LOG_HEADER.length).setNumberFormat('@').setValues(rows);
+}
 const HEADER_FOR = Object.fromEntries(COLUMNS);
 const KEY_FOR = Object.fromEntries(COLUMNS.map(([k, h]) => [h, k]));
 
@@ -67,7 +126,7 @@ function doGet(e) {
       entries[r[0]] = o;
     });
   }
-  return json_({ ok: true, entries });
+  return json_({ ok: true, entries, program: readProgram_() });
 }
 
 /**
@@ -77,6 +136,13 @@ function doGet(e) {
 function doPost(e) {
   if (e.parameter.token !== TOKEN) return json_({ ok: false, error: 'wrong token' });
   const body = JSON.parse(e.postData.contents) || {};
+  if (body.action === 'saveProgram') {
+    if (!Array.isArray(body.rows) || !body.rows.length) return json_({ ok: false, error: 'no program rows' });
+    const pl = LockService.getScriptLock();
+    pl.waitLock(20000);
+    try { writeProgram_(body.rows); } finally { pl.releaseLock(); }
+    return json_({ ok: true });
+  }
   const list = body.action === 'saveMany' ? (body.entries || []) : [body.entry || {}];
   const good = list.filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.date || ''));
   if (!good.length) return json_({ ok: false, error: 'missing date' });
@@ -106,6 +172,7 @@ function doPost(e) {
     const sorted = order.map(i => { const r = rows[i].slice(); r[0] = shown[i]; while (r.length < keys.length) r.push(''); return r; });
     sh.getRange(2, 1, sorted.length, 1).setNumberFormat('@');
     sh.getRange(2, 1, sorted.length, keys.length).setValues(sorted);
+    mirrorPhysioLog_(good);
   } finally {
     lock.releaseLock();
   }

@@ -25,6 +25,9 @@ final class Sync {
         void done(String status, boolean changed);
     }
 
+    /** Text values the physio tab keeps in a day's entry. */
+    private static final String[] PHYSIO_TEXT = {"physio_moves", "strength", "strength_feel", "cardio_intensity"};
+
     private static final ExecutorService EXEC = Executors.newSingleThreadExecutor();
 
     static void run(Context context, Done done) {
@@ -79,6 +82,15 @@ final class Sync {
                         if (!res.optBoolean("ok")) throw new IOException(res.optString("error", "the sheet refused the entry"));
                         store.clearPendingIfSame(date, sentJson);
                     }
+                    // the physio program, if it was edited on the phone
+                    if (store.programPending() && !store.programJson().isEmpty()) {
+                        String sentProgram = store.programJson();
+                        JSONObject body = new JSONObject();
+                        body.put("action", "saveProgram");
+                        body.put("rows", new org.json.JSONArray(sentProgram));
+                        JSONObject pr = parse(http(url, body.toString()));
+                        if (pr.optBoolean("ok")) store.clearProgramPendingIfSame(sentProgram);
+                    }
                     JSONObject res = parse(http(withParam(url, "action=all"), null));
                     if (!res.optBoolean("ok")) throw new IOException(res.optString("error", "the sheet refused the request"));
                     JSONObject remote = res.optJSONObject("entries");
@@ -92,10 +104,30 @@ final class Sync {
                             JSONObject l = store.get(date);
                             // keep a phone entry that was changed more recently than the sheet's copy
                             if (l != null && l.optString("updatedAt").compareTo(r.optString("updatedAt")) > 0) { if (!l.toString().equals(r.toString())) store.put(date, l, true); continue; }
+                            // same edit, but a sheet script from before physio turned its text into blanks: keep the phone's text
+                            if (l != null && l.optString("updatedAt").equals(r.optString("updatedAt"))) {
+                                for (String k : PHYSIO_TEXT) if (l.has(k) && !l.isNull(k) && (!r.has(k) || r.isNull(k))) r.put(k, l.get(k));
+                            }
                             if (l == null || !l.toString().equals(r.toString())) {
                                 store.put(date, r, false);
                                 changed = true;
                             }
+                        }
+                    }
+                    // the program from the sheet's Program tab; none there yet: send ours to create it
+                    if (res.has("program") && !store.programPending()) {
+                        org.json.JSONArray remoteProgram = res.optJSONArray("program");
+                        if (remoteProgram == null) {
+                            String local = store.programJson();
+                            if (!local.isEmpty()) {
+                                JSONObject body = new JSONObject();
+                                body.put("action", "saveProgram");
+                                body.put("rows", new org.json.JSONArray(local));
+                                parse(http(url, body.toString()));
+                            }
+                        } else if (remoteProgram.length() > 0 && !remoteProgram.toString().equals(store.programJson())) {
+                            store.setProgram(remoteProgram.toString(), false);
+                            changed = true;
                         }
                     }
                     status = "Synced with your sheet at " + DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date()) + ".";

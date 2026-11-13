@@ -7,6 +7,7 @@ A personal Android app for a daily check-in: mood, back pain, activity, anxiety,
 - A check-in before 4 AM counts for the previous day. The notification keeps coming until every notification dial is answered, so a morning weigh-in alone doesn't stop it.
 - **Weight** has its own tab: drag the ruler to enter today's weight, and the chart below shows your readings as dots with a monthly, weekly or daily line (missing days filled in), a dashed target, and 1M to All ranges. Paste past readings (lines like `2019-03-04, 137.2`, or two columns copied from a sheet) under Settings & sync → Import. If a day has a check-in but no weight, the last weight is carried forward. The sheet's `weight_carried` column says which is which: 0 = entered, 1 = carried forward, blank = no weight that day.
 - **Indicators** (a panel in the app) lets you rename, reorder, remove and add indicators: 0–5 dials, or numbers like weight. Removing only hides one; its past values stay. The defaults are in `app/src/main/assets/indicators.json`.
+- **Physio** has its own tab. At the top, a "Last 2 weeks" grid shows mobility, cardio, strength sessions and back pain by day; tap a day to go to it. Below it: **Mobility** (round check logs it; open it to tick the six moves as you go, those ticks aren't saved), **Cardio** (round check logs it, with minutes and Easy/Moderate/Hard), and **Strength**, today's session A or B (alternating). Each move has a round check that logs it with last time's numbers; tap the move for its set table, weight, animation, where you should feel it, how and why. **Plan details** at the bottom shows the phases and each move's ladder. When a move hits the top of its rep range with nothing "too much", the tab suggests adding 5 lb or the next rung.
 - Entries are saved on the phone right away and copied to a Google Sheet whenever there's a connection.
 
 ## Install on your phone
@@ -31,6 +32,8 @@ Every change pushed to this repository builds a new version at the same link. In
 "Anyone" is needed because the app doesn't sign in to Google. The token is what keeps others out, so keep the link private.
 
 The sheet gets one row per day with the columns `date, mood, back_pain, activity, anxiety, sleep, other_pain, driving, note, updated_at`. Indicators you add (and weight) get a new column at the end the first time they have a value.
+
+**Physio in the sheet:** each day's row also gets `mobility`, `cardio`, `cardio_min`, `cardio_intensity`, `strength` (A or B), `strength_done`, `strength_feel` and `physio_moves` (the sets, as text). The script keeps two more tabs: **Program** (one row per move: session, slot, exercise, sets, reps, next rung, cue, active, load lb), which you can edit in the sheet and the app picks up at the next sync, and **Physio_log** (one row per set, rebuilt from each day), for reading and charts. If there's no Program tab yet, the app creates it with its built-in program.
 
 **Updating the script:** after changing `Code.gs`, paste the new version into Apps Script, then **Deploy → Manage deployments → ✎ Edit → Version: New version → Deploy**. The link stays the same.
 

@@ -165,6 +165,24 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public String getProgram() {
+            return store.programJson();
+        }
+
+        /** The built-in program on first run: kept without syncing, so a Program tab already in the sheet wins. */
+        @JavascriptInterface
+        public void initProgram(String json) {
+            if (store.programJson().isEmpty()) store.setProgram(json, false);
+        }
+
+        /** The physio program changed in the app: keep it and send it to the sheet's Program tab. */
+        @JavascriptInterface
+        public void setProgram(String json) {
+            store.setProgram(json, true);
+            runOnUiThread(MainActivity.this::syncLater);
+        }
+
+        @JavascriptInterface
         public String getSettings() {
             JSONObject o = new JSONObject();
             try {
