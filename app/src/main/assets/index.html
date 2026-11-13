@@ -166,8 +166,8 @@ footer { font-size: .78rem; color: var(--muted); }
   padding: 6px; background: var(--surface); border: 1.5px solid #cdbdaa; border-radius: 30px; box-shadow: 0 10px 30px rgba(60, 40, 30, .24); }
 /* the page fades into the background behind the tab bar, so nothing busy shows around or under it */
 body::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(120px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 45%, transparent); pointer-events: none; z-index: 9; }
-/* icons only; the current tab is a soft green capsule with its name beside the icon. Every tab is the same width. */
-.tabs button { flex: none; width: 80px; min-height: 50px; border: 0; border-radius: 24px; background: transparent; color: var(--muted); font: 700 .85rem var(--body); cursor: pointer;
+/* icons only; the current tab is a soft green capsule with its name beside the icon, wide enough for the name. */
+.tabs button { flex: none; width: 58px; padding: 0; min-height: 50px; border: 0; border-radius: 24px; background: transparent; color: var(--muted); font: 700 .85rem var(--body); cursor: pointer;
   display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px; transition: background .15s, color .15s; }
 .tabs button svg { width: 22px; height: 22px; flex: none; }
 .tabs button span { display: none; }
@@ -179,7 +179,9 @@ body::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height
 #ru-weight .bub.set { --bub: #1f4e79; }
 #ru-weight .bub.set .bub-box { color: #fff; }
 #ru-weight .bub.set .bub-box span { color: #c9d9e8; }
-.tabs button[aria-selected="true"] span { display: inline; }
+.tabs button[aria-selected="true"] span { display: inline; white-space: nowrap; }
+/* the current tab widens to fit its name; the others stay icon-only */
+.tabs button[aria-selected="true"] { width: auto; padding: 0 18px 0 14px; }
 .tabs button[hidden] { display: none; }
 .wrap { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
 body.on-settings header { display: none; }

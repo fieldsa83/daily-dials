@@ -375,25 +375,46 @@ function panel(p,title,items,store,k,isToday){
 }
 var PLAYI='<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" style="vertical-align:-1px"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>';
 var PHASES=[
- {n:1,name:'Rebuild',when:'Now \u2192 mid-Dec',goal:'Consistency without flare-ups. Bodyweight and backpack at home, 3 sessions a week, reps first.',exit:'Done when: 3 sessions a week for 4 weeks, no \u201ctoo much\u201d in the last 2.'},
- {n:2,name:'Load',when:'Mid-Dec \u2192 Feb',goal:'Same slots, moved to gym dumbbells and cables. Weight goes up 5 lb at a time.',exit:'Done when: physiatrist review, back steady on the check-in.'},
- {n:3,name:'Strength',when:'March on',goal:'General strength: heavier hinge and squat, add pull-ups and carries. Rotation work only if cleared.',exit:'Ongoing; review every 6 weeks.'}];
+ {n:1,name:'Rebuild',when:'Now → mid-December',
+  why:'Get the back, hips and obliques used to regular work again without flare-ups. Reps before weight.',
+  week:'3 strength sessions (A, B, A… any days) · mobility every day · cardio 3× 20–30 min, easy to moderate (walk, bike).',
+  A:[['Single-leg RDL','hamstrings and glutes, one side at a time'],['Single-leg glute bridge','glute on each side, almost no spine load'],['Split squat','front-leg strength, knee and hip control'],['Side plank hip dips','obliques without twisting'],['Plank shoulder taps','core that resists twisting']],
+  B:[['Backpack RDL','the hip hinge with light load'],['Goblet squat','both legs, upright back'],['Band row','upper back and posture'],['Pallof press','anti-rotation core'],['Push-up','upper-body push']],
+  aim:'3 sessions a week for 4 weeks · top of the rep range on most moves · no “too much” in the last 2 weeks · back pain mostly 2 or less.'},
+ {n:2,name:'Load',when:'Mid-December → end of February',
+  why:'Same patterns, now with dumbbells and cables at the gym so strength actually builds. Add 5 lb whenever you hit the top of the range twice.',
+  week:'3 strength sessions · mobility most days · cardio 3× 30 min, one of them harder.',
+  A:[['Dumbbell single-leg RDL',''],['Hip thrust with weight',''],['Rear-foot-elevated split squat',''],['Side plank with reach',''],['Bear-crawl shoulder taps','']],
+  B:[['Dumbbell RDL',''],['Dumbbell goblet squat',''],['Cable or seated row',''],['Cable Pallof press',''],['Dumbbell bench press or feet-raised push-up','']],
+  aim:'Weights going up every couple of weeks with no flare-ups · physiatrist review done.'},
+ {n:3,name:'Strength',when:'March onward',
+  why:'Long-term general strength: heavier lifts, pulling and carrying. Rotation only once it’s cleared.',
+  week:'3 strength sessions · mobility as a warm-up · cardio 150 min a week.',
+  A:[['Trap-bar deadlift',''],['Bulgarian split squat',''],['Lat pulldown, then assisted pull-ups',''],['Suitcase carry',''],['Side plank variations','']],
+  B:[['Heavier goblet or front squat',''],['Heavy hip thrust',''],['One-arm dumbbell row',''],['Overhead press, if the shoulder is happy',''],['Rotation work, if Dr. Delaney clears it','']],
+  aim:'Review every 6 weeks and pick new targets.'}];
 function historyGrid(){
-  var t=today(),k0=selDay(),cols=[],i;
-  for(i=13;i>=0;i--)cols.push(iso(addDays(parseD(t),-i)));
-  var h='<section class="card hist2"><div class="prw" style="padding:0 4px"><span class="nm" style="font-size:17px">Last 2 weeks</span><span class="small">tap a day</span></div><div class="hgrid"><span></span>';
-  cols.forEach(function(k,j){var d=parseD(k);h+='<button class="hday'+(k===k0?' sel':'')+(j===7?' gap':'')+'" data-act="hday" data-k="'+k+'" aria-pressed="'+(k===k0)+'" aria-label="'+esc(longDay(k))+'">'+('MTWTFSS'[(d.getDay()+6)%7])+'<br>'+d.getDate()+'</button>';});
-  function row(name,fn){h+='<span class="hname">'+name+'</span>';cols.forEach(function(k,j){var c=fn(k);h+='<span class="hcell'+(j===7?' gap':'')+'" style="background:'+c[0]+';color:'+(c[2]||'#fff')+'">'+c[1]+'</span>';});}
-  row('Mobility',function(k){return [mobDone(k)?'var(--green)':'#ece1d4',''];});
-  row('Cardio',function(k){var c=cardioOf(k);return c?[c.int==='Hard'?'#2c5f8f':c.int==='Easy'?'#9fc3e6':'#3f7fbf',c.min||'\u2713',c.int==='Easy'?'#1d3b57':'#fff']:['#ece1d4',''];});
-  row('Strength',function(k){var L=dayLog(k);if(!L||!L.moves.length)return ['#ece1d4',''];var n=activeRows(L.letter).length,part=L.moves.length<n;
-    return [L.feel==='too'?'var(--amber)':part?'#cfe5c4':'var(--green)',L.letter,part&&L.feel!=='too'?'#2f6b27':'#fff'];});
-  row('Back pain',function(k){var p=entries[k]&&entries[k].pain;if(p==null||p==='')return ['#ece1d4',''];p=+p;return [['#66bb57','#a7cf8e','#d9c96b','#e8b34f','#d9824f','#c0533d'][Math.max(0,Math.min(5,p))]||'#ece1d4',p];});
-  h+='</div>';
-  var L=dayLog(k0),c=cardioOf(k0),bits=[mobDone(k0)?'Mobility done':'No mobility',c?'Cardio'+(c.min?' '+c.min+' min':'')+(c.int?', '+c.int.toLowerCase():''):'No cardio',
-    L&&L.moves.length?'Session '+L.letter+', '+L.moves.length+' of '+activeRows(L.letter).length+' moves'+(L.feel?', '+FEEL[L.feel].toLowerCase():''):'No strength'];
-  h+='<div class="hsum"><b>'+esc(dayLabel(k0))+'</b> \u00b7 '+esc(bits.join(' \u00b7 '))+'</div>';
-  return h+'</section>';
+  var t=today(),days=[],i;
+  for(i=13;i>=0;i--)days.push(iso(addDays(parseD(t),-i)));
+  var P=(typeof METRICS!=='undefined')?METRICS.filter(function(m){return m.key==='pain';})[0]:null;
+  var g='';
+  function cell(d,bg,lab){return '<span class="cell" role="img" aria-label="'+esc(lab+', '+longDay(d))+'"'+(bg?' style="background:'+bg+'"':'')+'></span>';}
+  function pill(c,txt){return '<div class="av" style="--c:'+c+'">'+txt+'</div>';}
+  function row(name,cellFn,pillFn){g+='<div class="lbl">'+name+'</div>';days.forEach(function(d,j){if(j===7)g+=pillFn(days.slice(0,7))+'<div></div>';g+=cellFn(d);});g+=pillFn(days.slice(7));}
+  var top=STOPS[5],mid=STOPS[4],part=STOPS[3],warn=STOPS[2];
+  row('Mobility',function(d){return cell(d,mobDone(d)?top:'',mobDone(d)?'Mobility done':'No mobility');},
+    function(ds){var n=ds.filter(mobDone).length;return pill(colour(n/7),n+'/7');});
+  row('Cardio',function(d){var c=cardioOf(d);return cell(d,c?(c.int==='Easy'?mid:top):'',c?'Cardio '+(c.min||'')+' min':'No cardio');},
+    function(ds){var m=0;ds.forEach(function(d){var c=cardioOf(d);if(c)m+=c.min||0;});return pill(m?colour(Math.min(1,m/120)):'var(--empty)',m?m+'′':'–');});
+  row('Strength',function(d){var L=dayLog(d);if(!L||!L.moves.length)return cell(d,'','No strength');var n=activeRows(L.letter).length;
+      return cell(d,L.feel==='too'?warn:L.moves.length<n?part:top,'Session '+L.letter+(L.feel==='too'?', too much':''));},
+    function(ds){var n=ds.filter(function(d){var L=dayLog(d);return L&&L.moves.length;}).length;return pill(colour(Math.min(1,n/3)),n+'/3');});
+  if(P)row(esc(P.short||P.name),function(d){var v=entries[d]&&entries[d].pain;return (v==null||v==='')?cell(d,'','No entry'):cell(d,colour(goodness(P,+v)),P.name+' '+v);},
+    function(ds){var vs=ds.map(function(d){return entries[d]&&entries[d].pain;}).filter(function(v){return v!=null&&v!=='';}).map(Number);
+      var a=vs.length?vs.reduce(function(x,y){return x+y;},0)/vs.length:null;return pill(a==null?'var(--empty)':colour(goodness(P,a)),a==null?'–':a.toFixed(1));});
+  var wk=function(a,b){return shortDay(a)+' – '+parseD(b).getDate();};
+  return '<section class="card ptrend"><div class="tt" style="margin:0 0 10px"><span class="t1">Last 2 weeks</span></div><div class="grid">'+g+'</div>'+
+    '<div class="gaxis"><span></span><span style="grid-column:span 7">'+wk(days[0],days[6])+'</span><span>'+'</span><span></span><span style="grid-column:span 7">'+wk(days[7],days[13])+'</span><span></span></div></section>';
 }
 function cardioPanel(k,isToday){
   var c=cardioOf(k),done=!!c,open=!!UI.open.cardio,d=cardioDraft(k);
@@ -416,14 +437,13 @@ function renderTab(){
   h+=panel('mob','Mobility',MOB,null,k,isToday)+cardioPanel(k,isToday);
 
   var done=L?L.moves.length:0;
-  h+='<section class="card strc"><div class="prw" style="padding:0 16px"><span class="nm" style="font-size:17px">Strength \u00b7 Session '+esc(letter)+'</span><span class="small">'+done+' of '+rows.length+'</span></div>'+
-    '<div class="pbar"><span style="width:'+(rows.length?Math.round(done/rows.length*100):0)+'%"></span></div>';
+  h+='<section class="card strc"><div class="prw" style="padding:0 16px 6px"><span class="t1">Strength \u00b7 Session '+esc(letter)+'</span><span class="small">'+done+' of '+rows.length+'</span></div>';
   if(!rows.length)h+='<div class="small" style="padding:6px 16px">No active moves in Session '+esc(letter)+'. Add some in Program.</div>';
-  rows.forEach(function(r){
+  rows.forEach(function(r,ri){
     var e=entryFor(L,r),lf=lastFor(r.exercise,k),sub;
     if(e){var rr=repsOf(e);sub=setsStr(rr,e.load||0)+(rr.length<e.reps.length?' \u00b7 '+rr.length+' of '+e.reps.length+' sets':'');}
     else sub='Target '+r.sets+' \u00d7 '+repStr(r.reps)+(lf?' \u00b7 last '+lastStr(lf.move):(+r.load>0?' @ '+fmtLb(+r.load)+' lb':''));
-    h+='<div class="srow mrow'+(e?' done':'')+'"><button class="sopen" data-act="open" data-id="'+r.id+'"><span class="thumb">'+glyphSvg(r.exercise,30)+'</span><span class="nm">'+esc(r.exercise)+'<small>'+esc(sub)+'</small></span>'+CHEVR+'</button>'+
+    h+='<div class="srow mrow'+(ri===0?' first':'')+(e?' done':'')+'"><button class="sopen" data-act="open" data-id="'+r.id+'"><span class="thumb">'+glyphSvg(r.exercise,30)+'</span><span class="nm">'+esc(r.exercise)+'<small>'+esc(sub)+'</small></span>'+CHEVR+'</button>'+
       '<button class="tickb" data-act="tick" data-id="'+r.id+'" role="switch" aria-checked="'+!!e+'" aria-label="'+esc(r.exercise)+' done">'+RC+'</button></div>';
   });
   if(L&&L.moves.length){
@@ -452,8 +472,13 @@ function planSheet(){
     '<div class="shead"><h2>Your strength plan</h2><button id="sheetClose" class="xbtn" data-act="closeplan" aria-label="Close">&#215;</button></div>'+
     '<div class="pseg" role="tablist" aria-label="Plan sections" style="grid-template-columns:1fr 1fr">'+['Roadmap','Moves'].map(function(t){return '<button data-act="ptab" data-v="'+t+'" role="tab" aria-selected="'+(t===tab)+'" aria-checked="'+(t===tab)+'">'+t+'</button>';}).join('')+'</div>';
   if(tab==='Roadmap'){
-    h+=PHASES.map(function(p){return '<div class="phase'+(p.n===1?' on':'')+'"><div class="prw"><b>Phase '+p.n+' \u00b7 '+p.name+'</b><span>'+p.when+'</span></div><p>'+p.goal+'</p><p class="ex">'+p.exit+'</p>'+(p.n===1?'<span class="here">You are here</span>':'')+'</div>';}).join('')+
-      '<p class="small">A sample plan to react to, not medical advice. Set the real one with your physio; reviews every 4\u20136 weeks.</p>';
+    h+='<div class="rulebox"><div class="lbl">Sessions vs phases</div><p><b>Session A and B</b> are two different workouts at the same level. You alternate them: log A today and your next strength day shows B. <b>Phases</b> are the months-long plan: each phase swaps in harder versions of the moves.</p></div>';
+    h+=PHASES.map(function(p){
+      var list=function(L){return '<ul class="plist">'+L.map(function(x){return '<li><b>'+esc(x[0])+'</b>'+(x[1]?' \u2014 '+esc(x[1]):'')+'</li>';}).join('')+'</ul>';};
+      return '<div class="phase'+(p.n===1?' on':'')+'"><div class="prw"><b>Phase '+p.n+' \u00b7 '+p.name+'</b>'+(p.n===1?'<span class="here">You are here</span>':'')+'</div><div class="pwhen">'+p.when+'</div>'+
+        '<p>'+esc(p.why)+'</p><p class="ex">'+esc(p.week)+'</p><div class="psub">Session A</div>'+list(p.A)+'<div class="psub">Session B</div>'+list(p.B)+
+        '<p class="ex"><b>Ready to move on when:</b> '+esc(p.aim)+'</p></div>';}).join('')+
+      '<p class="small">My draft from what you\u2019ve told me, not medical advice. Go over it with your physio.</p>';
   }else{
     h+='<div class="rulebox"><div class="lbl">The rule for every move</div><p>Add reps until every set hits the top of the range. Do it twice, nothing \u201ctoo much\u201d, and the next step unlocks: +5 lb, or the next rung if it can\u2019t take weight. Two \u201ctoo much\u201d in a row: step back.</p></div>';
     var seen={};
