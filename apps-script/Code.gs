@@ -73,7 +73,7 @@ function mirrorPhysioLog_(entries) {
     try { moves = JSON.parse(e.physio_moves || '[]'); } catch (err) { moves = []; }
     for (const m of moves) (m.reps || []).forEach((r, i) => {
       if (r === null || r === '') return;
-      rows.push([e.date, e.strength || '', m.slot || '', m.exercise || '', String(i + 1), String(r), m.load ? String(m.load) : '',
+      rows.push([e.date, e.strength || '', m.slot || '', m.exercise || '', String(i + 1), String(r), (m.loads && m.loads[i] != null ? m.loads[i] : m.load) ? String(m.loads && m.loads[i] != null ? m.loads[i] : m.load) : '',
         (m.reps || []).length + 'x' + (m.lo === m.hi ? m.lo : m.lo + '-' + m.hi), e.strength_feel || '']);
     });
   }

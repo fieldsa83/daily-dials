@@ -242,7 +242,7 @@ function ensureLog(k){
 }
 function storeLog(L){
   var d=L.date,has=L.moves.length>0;
-  setKey(d,'physio_moves',has||L.feel?JSON.stringify(L.moves.map(function(m){return {slot:m.slot,exercise:m.exercise,sets:m.reps.length,lo:m.lo,hi:m.hi,load:m.load||0,reps:m.reps};})):null);
+  setKey(d,'physio_moves',has||L.feel?JSON.stringify(L.moves.map(function(m){return {slot:m.slot,exercise:m.exercise,sets:m.reps.length,lo:m.lo,hi:m.hi,load:m.load||0,loads:m.loads||null,reps:m.reps};})):null);
   setKey(d,'strength',has?L.letter:null);
   setKey(d,'strength_done',has?L.moves.filter(function(m){return repsOf(m).length;}).length:null);
   setKey(d,'strength_feel',L.feel||null);
@@ -256,14 +256,21 @@ function startLoad(row,k){var lf=lastFor(row.exercise,k),rl=+row.load||0;if(load
 function newEntry(row){var lr=parseReps(row.reps),n=Math.max(1,Math.min(8,+row.sets||3));
   return {rowId:row.id,slot:row.slot,exercise:row.exercise,sets:n,lo:lr[0],hi:lr[1],load:startLoad(row,selDay()),reps:new Array(n).fill(null)};}
 function orderMoves(L){var ids=S.program.map(function(r){return r.id;});L.moves.sort(function(a,b){return ids.indexOf(a.rowId)-ids.indexOf(b.rowId);});}
+function loadAt(m,i){return (m.loads&&m.loads[i]!=null)?+m.loads[i]:(+m.load||0);}
+function fixLoad(e){var d=[];e.reps.forEach(function(r,i){if(r!=null)d.push(loadAt(e,i));});e.load=d.length?Math.max.apply(null,d):0;}
+/* the plan for each set: from today's log, else last time, else the program */
 function pend(row){var k=selDay(),key=k+'|'+row.id;UI.pend=UI.pend||{};
-  if(!UI.pend[key]){var e=entryFor(dayLog(k),row);
-    if(e){var rr=repsOf(e);UI.pend[key]={s:e.reps.length,r:rr.length?rr[rr.length-1]:startReps(row,k),l:e.load||0};}
-    else UI.pend[key]={s:Math.max(1,Math.min(10,+row.sets||3)),r:startReps(row,k),l:startLoad(row,k)};}
+  if(!UI.pend[key]){var e=entryFor(dayLog(k),row),q;
+    var lr=parseReps(row.reps),lf=lastFor(row.exercise,k),ch=loadChanged(row,lf),n=Math.max(1,Math.min(10,+row.sets||3));
+    var defR=function(i){if(lf&&!ch){var lr2=lf.move.reps;if(lr2[i]!=null)return lr2[i];var rr=repsOf(lf.move);if(rr.length)return rr[rr.length-1];}return lr[0];};
+    var defL=function(i){if(ch||!lf)return +row.load||0;return loadAt(lf.move,i<lf.move.reps.length?i:lf.move.reps.length-1);};
+    if(e){q={s:e.reps.length,rs:e.reps.map(function(x,i){return x==null?defR(i):x;}),ls:e.reps.map(function(x,i){return loadAt(e,i);})};}
+    else{q={s:n,rs:[],ls:[]};for(var i=0;i<n;i++){q.rs.push(defR(i));q.ls.push(defL(i));}}
+    UI.pend[key]=q;}
   return UI.pend[key];}
-function vals(row){var q=pend(row),e=entryFor(dayLog(selDay()),row);return {s:q.s,r:q.r,l:q.l,done:!!e};}
+function vals(row){var q=pend(row),e=entryFor(dayLog(selDay()),row);return {s:q.s,rs:q.rs,ls:q.ls,done:!!e};}
 function makeEntry(row,fill){var q=pend(row),lr=parseReps(row.reps);
-  return {rowId:row.id,slot:row.slot,exercise:row.exercise,sets:q.s,lo:lr[0],hi:lr[1],load:q.l||0,reps:new Array(q.s).fill(fill?q.r:null)};}
+  var e={rowId:row.id,slot:row.slot,exercise:row.exercise,sets:q.s,lo:lr[0],hi:lr[1],loads:q.ls.slice(),reps:q.rs.map(function(v){return fill?v:null;})};fixLoad(e);return e;}
 function toggleMove(row){
   var k=selDay(),L=ensureLog(k),e=entryFor(L,row);
   if(e)L.moves.splice(L.moves.indexOf(e),1);
@@ -271,19 +278,31 @@ function toggleMove(row){
   storeLog(L);render();
 }
 function logAll(row){var k=selDay(),L=ensureLog(k),e=entryFor(L,row),q=pend(row);
-  if(!e){e=makeEntry(row,true);L.moves.push(e);orderMoves(L);}else e.reps=e.reps.map(function(x){return x==null?q.r:x;});
+  if(!e){e=makeEntry(row,true);L.moves.push(e);orderMoves(L);}
+  else{e.reps=e.reps.map(function(x,i){return x==null?q.rs[i]:x;});e.loads=q.ls.slice();fixLoad(e);}
   storeLog(L);}
 function setCheck(row,i){var k=selDay(),L=ensureLog(k),e=entryFor(L,row),q=pend(row);
   if(!e){e=makeEntry(row,false);L.moves.push(e);orderMoves(L);}
-  e.reps[i]=e.reps[i]==null?q.r:null;
+  e.loads=e.loads||q.ls.slice();e.reps[i]=e.reps[i]==null?q.rs[i]:null;e.loads[i]=q.ls[i];fixLoad(e);
   if(!repsOf(e).length)L.moves.splice(L.moves.indexOf(e),1);
   storeLog(L);render();}
-function adjust(row,which,d,setTo){
+/* change one set's weight or reps; a set already ticked is updated in the log too */
+function adjustSet(row,i,which,d){
   var k=selDay(),L=dayLog(k),e=entryFor(L,row),q=pend(row);
-  if(which==='s'){q.s=Math.max(1,Math.min(10,q.s+d));if(e){while(e.reps.length<q.s)e.reps.push(null);e.reps=e.reps.slice(0,q.s);e.sets=q.s;if(!repsOf(e).length)L.moves.splice(L.moves.indexOf(e),1);}}
-  else if(which==='r'){q.r=Math.max(0,Math.min(99,q.r+d));if(e)e.reps=e.reps.map(function(x){return x==null?null:q.r;});}
-  else{q.l=setTo!=null?setTo:Math.max(0,Math.min(999,(q.l||0)+d));if(e)e.load=q.l;}
-  if(e)storeLog(L);render();
+  if(which==='r')q.rs[i]=Math.max(0,Math.min(99,q.rs[i]+d));
+  else{q.ls[i]=Math.max(0,Math.min(999,q.ls[i]+d));
+    /* a new weight carries to the later sets not ticked yet */
+    for(var j=i+1;j<q.s;j++)if(!(e&&e.reps[j]!=null))q.ls[j]=q.ls[i];}
+  if(e&&e.reps[i]!=null){e.reps[i]=q.rs[i];e.loads=e.loads||q.ls.slice();e.loads[i]=q.ls[i];fixLoad(e);storeLog(L);}
+  render();}
+function adjust(row,which,d){
+  if(which!=='s')return;
+  var k=selDay(),L=dayLog(k),e=entryFor(L,row),q=pend(row);
+  var n=Math.max(1,Math.min(10,q.s+d));
+  while(q.rs.length<n){q.rs.push(q.rs[q.rs.length-1]);q.ls.push(q.ls[q.ls.length-1]);}
+  q.rs=q.rs.slice(0,n);q.ls=q.ls.slice(0,n);q.s=n;
+  if(e){while(e.reps.length<n)e.reps.push(null);e.reps=e.reps.slice(0,n);e.loads=q.ls.slice();e.sets=n;fixLoad(e);if(!repsOf(e).length)L.moves.splice(L.moves.indexOf(e),1);storeLog(L);}
+  render();
 }
 function nudge(row,d){
   var k=selDay(),L=dayLog(k),e=entryFor(L,row);if(!e)return;
@@ -513,15 +532,18 @@ function sheet(r){
   var h='<div class="scrim'+(UI.focusSheet?' in':'')+'" data-act="close"></div><section class="sheet'+(UI.focusSheet?' in':'')+'" role="dialog" aria-modal="true" aria-label="'+esc(r.exercise)+'"><div class="grab" aria-hidden="true"></div>';
   h+='<div class="shead"><span class="thumb big">'+glyphSvg(r.exercise,34)+'</span><div style="flex:1;min-width:0"><div class="lbl">Session '+esc(r.session)+(r.slot?' \u00b7 '+esc(r.slot):'')+'</div><h2>'+esc(r.exercise)+'</h2></div><button id="sheetClose" class="xbtn" data-act="close" aria-label="Close">&#215;</button></div>';
   h+='<div class="prw small"><span>Target <b style="color:var(--fg)">'+esc(r.sets)+' \u00d7 '+esc(repStr(r.reps))+'</b>'+(perSide(r.exercise)?' per side':'')+'</span><span>'+(lf?'Last '+esc(lastStr(lf.move))+' \u00b7 '+wd(lf.log.date):'First time')+'</span></div>';
-  h+='<div class="sedit" style="padding:0">'+stepper('xreps',r.id,v.r,'reps','reps')+loadCtl('xload',r.id,v.l)+'</div>';
-  h+='<div class="stbl"><div class="sth"><span>Set</span><span>Last</span><span>Lb</span><span>Reps</span><span></span></div>';
-  for(var i=0;i<v.s;i++){var on=!!(e&&e.reps[i]!=null),val=on?e.reps[i]:v.r;
-    h+='<div class="str'+(on?' on':'')+'"><span class="sn">'+(i+1)+'</span><span class="sl">'+(lastR[i]!=null?(lastL?fmtLb(lastL)+' lb \u00d7 ':'\u00d7 ')+lastR[i]:'\u2014')+'</span><span class="sv2">'+(v.l>0?fmtLb(v.l):'\u2014')+'</span><span class="sv2">'+val+'</span>'+
+  h+='<div class="stbl"><div class="sth2"><span>Set</span><span>Lb</span><span>Reps</span><span></span></div>';
+  for(var i=0;i<v.s;i++){var on=!!(e&&e.reps[i]!=null),rv=on?e.reps[i]:v.rs[i],lv=v.ls[i];
+    var last=lastR[i]!=null?(loadAt(lf.move,i)?fmtLb(loadAt(lf.move,i))+'×':'×')+lastR[i]:'';
+    var sb=function(act,d,lab){return '<button data-act="'+act+'" data-i="'+i+'" data-d="'+d+'" data-id="'+r.id+'" aria-label="'+(d>0?'More ':'Less ')+lab+', set '+(i+1)+'">'+(d>0?'+':'−')+'</button>';};
+    h+='<div class="str2'+(on?' on':'')+'"><span class="sn2"><b>'+(i+1)+'</b><small>'+esc(last)+'</small></span>'+
+      '<span class="stp">'+sb('sl',-5,'weight')+'<span class="sv3">'+(lv>0?fmtLb(lv):'—')+'</span>'+sb('sl',5,'weight')+'</span>'+
+      '<span class="stp">'+sb('sr',-1,'reps')+'<span class="sv3">'+rv+'</span>'+sb('sr',1,'reps')+'</span>'+
       '<button class="tickb sm" data-act="setck" data-i="'+i+'" data-id="'+r.id+'" role="switch" aria-checked="'+on+'" aria-label="Set '+(i+1)+' done">'+RC+'</button></div>';}
-  h+='</div><div class="prw"><span><button class="link" data-act="xsets" data-d="1" data-id="'+r.id+'">+ Add a set</button>'+(v.s>1?' <button class="link" data-act="xsets" data-d="-1" data-id="'+r.id+'" style="margin-left:12px">\u2212 Remove</button>':'')+'</span></div>';
+  h+='</div><div class="prw"><span><button class="link" data-act="xsets" data-d="1" data-id="'+r.id+'">+ Add a set</button>'+(v.s>1?' <button class="link" data-act="xsets" data-d="-1" data-id="'+r.id+'" style="margin-left:12px">− Remove</button>':'')+'</span></div>';
   var nd=e?repsOf(e).length:0;
   h+=nd>=v.s?'<div class="sfoot2"><button class="logbtn on" data-act="close">'+TICKS+' Logged \u00b7 '+esc(setsStr(repsOf(e),e.load||0))+'</button><button class="link" data-act="tick" data-id="'+r.id+'">Undo</button></div>'
-    :'<button class="logbtn" data-act="logclose" data-id="'+r.id+'">'+(nd?'Log the other '+(v.s-nd)+' set'+(v.s-nd>1?'s':''):'Log all '+v.s+' sets')+'</button>';
+    :'<button class="logbtn" data-act="logclose" data-id="'+r.id+'">'+(nd?(v.s-nd===1?'Log the last set':'Log the other '+(v.s-nd)+' sets'):'Log all '+v.s+' sets')+'</button>';
   if(ak){
     h+='<div class="ministage"><svg viewBox="20 20 270 190" role="img" aria-label="Figure demonstrating '+esc(r.exercise)+'. Tap to pause." data-act="playpause"><line x1="6" x2="294" y1="'+(170+ANIM[ak].dy)+'" y2="'+(170+ANIM[ak].dy)+'" stroke="var(--floor)" stroke-width="3" stroke-linecap="round"/><g id="fig" transform="translate(0,'+ANIM[ak].dy+')" fill="none" stroke-linecap="round" stroke-linejoin="round"></g></svg><div class="plabel" id="plabel"></div>'+
       (zones.length?'<div class="legend"><span><i class="lz work"></i>Should work</span>'+(hasStretch?'<span><i class="lz stretch"></i>Mild stretch OK</span>':'')+'</div>':'')+'</div>';
@@ -684,6 +706,8 @@ app.addEventListener('click',function(e){
     case 'close':var was=UI.sheet;UI.sheet=null;render();var btn=app.querySelector('[data-act=open][data-id="'+was+'"]');if(btn)btn.focus();break;
     case 'logclose':logAll(row);UI.sheet=null;render();break;
     case 'setck':setCheck(row,+b.dataset.i);break;
+    case 'sl':adjustSet(row,+b.dataset.i,'l',+b.dataset.d);break;
+    case 'sr':adjustSet(row,+b.dataset.i,'r',+b.dataset.d);break;
     case 'plan':UI.planOpen=true;UI.focusSheet=true;render();break;
     case 'closeplan':UI.planOpen=false;render();break;
     case 'ptab':UI.ptab=b.dataset.v;render();break;

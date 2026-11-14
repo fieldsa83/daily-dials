@@ -263,3 +263,17 @@
 #tab-physio .phase .prw{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 #tab-physio .phase .plist b,#tab-physio .phase .ex b{font-family:var(--body);font-size:inherit;font-weight:700;line-height:inherit}
 #tab-physio .phase .prw b{font:500 17px var(--display)}
+
+/* each set: weight and reps steppers */
+#tab-physio .sth2,#tab-physio .str2{display:grid;grid-template-columns:34px 1fr 1fr 44px;gap:6px;align-items:center}
+#tab-physio .sth2{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);padding:0 2px}
+#tab-physio .sth2 span:nth-child(2),#tab-physio .sth2 span:nth-child(3){text-align:center}
+#tab-physio .str2{border-radius:12px;padding:3px 2px}
+#tab-physio .str2.on{background:#eef5e9}
+#tab-physio .sn2{text-align:center;line-height:1.1}
+#tab-physio .sn2 b{display:block;font:700 16px var(--head)}
+#tab-physio .sn2 small{font-size:10px;color:var(--mut)}
+#tab-physio .stp{display:flex;align-items:center;justify-content:space-between;background:var(--chip);border-radius:20px;padding:3px}
+#tab-physio .stp button{width:32px;height:32px;border-radius:50%;border:0;background:var(--card);box-shadow:0 0 0 1px var(--line);font-size:17px;font-weight:700;flex:none}
+#tab-physio .sv3{flex:1;text-align:center;font:700 17px var(--head)}
+#tab-physio .str2.on .rc{background:var(--green);box-shadow:none}#tab-physio .str2.on .rc svg{opacity:1}
