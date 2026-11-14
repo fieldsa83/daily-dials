@@ -85,7 +85,16 @@ public class MainActivity extends Activity {
         if (intent == null || !Reminder.ACTION_OPEN_DAY.equals(intent.getAction())) return null;
         intent.setAction(Intent.ACTION_MAIN); // don't apply it twice
         Reminder.cancel(this);
-        return intent.getStringExtra("date");
+        String date = intent.getStringExtra("date");
+        // a number tapped in the notification: save it before the page reads the day
+        String key = intent.getStringExtra("key");
+        int value = intent.getIntExtra("value", -1);
+        if (date != null && key != null && value >= 0 && value <= 5) {
+            store.setValue(date, key, value);
+            Reminder.cancelNudge(this);
+            intent.removeExtra("key");
+        }
+        return date;
     }
 
     private void showDay(String date) {

@@ -126,11 +126,12 @@ final class Reminder {
                 : name + "?";
         String scale = highIsGood ? "0 bad · 5 good" : "0 none · 5 max";
         big.setTextViewText(R.id.title, title);
+        small.setTextViewText(R.id.title, title + "  \u00b7  " + scale);
         big.setTextViewText(R.id.scale, scale);
 
         for (int n = 0; n < BUTTONS.length; n++) {
             int colour = highIsGood ? n : 5 - n; // green always means a good day
-            PendingIntent pi = answer(c, date, step, key, n);
+            PendingIntent pi = answerAndOpen(c, date, step, key, n);
             for (RemoteViews v : new RemoteViews[]{small, big}) {
                 v.setInt(BUTTONS[n], "setBackgroundResource", COLOURS[colour]);
                 v.setOnClickPendingIntent(BUTTONS[n], pi);
@@ -138,7 +139,7 @@ final class Reminder {
         }
 
         Notification.Builder b = builder(c, store)
-                .setSubText(name + " · " + (step + 1) + " of " + dials.size())
+                .setSubText("Check-in")
                 .setContentTitle(title)
                 .setContentText(scale)
                 .setStyle(new Notification.DecoratedCustomViewStyle())
@@ -242,6 +243,17 @@ final class Reminder {
                 .putExtra("key", key)
                 .putExtra("value", value);
         return PendingIntent.getBroadcast(c, 100 + step * 10 + value + 1, i, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    /** A number tapped in the notification: saved by the app as it opens on that day's Check-in. */
+    private static PendingIntent answerAndOpen(Context c, String date, int step, String key, int value) {
+        Intent i = new Intent(c, MainActivity.class)
+                .setAction(ACTION_OPEN_DAY)
+                .putExtra("date", date)
+                .putExtra("key", key)
+                .putExtra("value", value)
+                .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return PendingIntent.getActivity(c, 200 + step * 10 + value, i, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     private static PendingIntent openDay(Context c, String date, int code) {

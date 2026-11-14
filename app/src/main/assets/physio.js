@@ -701,7 +701,10 @@ app.addEventListener('click',function(e){
     case 'notyet':var s=suggestions()[0];S.declined[s.row.id]=s.log.id;saveMeta();render();break;
     case 'pdone':var pk=selDay();setKey(pk,'mobility',mobDone(pk)?null:1);saveDay(pk);render();break;
     case 'expand':UI.open[b.dataset.p]=!UI.open[b.dataset.p];render();break;
-    case 'vis':visToggle(selDay(),b.dataset.p,b.dataset.k);render();break;
+    case 'vis':var vk=selDay();visToggle(vk,b.dataset.p,b.dataset.k);
+      /* every mobility move ticked: log mobility for the day */
+      if(b.dataset.p==='mob'&&!mobDone(vk)&&MOB.every(function(m){return visOn(vk,'mob',m[0]);})){setKey(vk,'mobility',1);saveDay(vk);}
+      render();break;
     case 'dellog':var id=b.dataset.id;twoTap('del'+id,function(){S.logs=S.logs.filter(function(x){return x.id!==id;});drop('s_'+id);render();});break;
     case 'program':UI.screen='program';UI.banner=null;render();window.scrollTo(0,0);break;
     case 'home':UI.screen='tab';UI.banner=null;UI.edit=null;UI.paste=false;UI.copyBox=null;render();window.scrollTo(0,0);break;
