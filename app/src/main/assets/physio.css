@@ -277,3 +277,7 @@
 #tab-physio .stp button{width:32px;height:32px;border-radius:50%;border:0;background:var(--card);box-shadow:0 0 0 1px var(--line);font-size:17px;font-weight:700;flex:none}
 #tab-physio .sv3{flex:1;text-align:center;font:700 17px var(--head)}
 #tab-physio .str2.on .rc{background:var(--green);box-shadow:none}#tab-physio .str2.on .rc svg{opacity:1}
+#tab-physio .sswitch button{display:flex;flex-direction:column;align-items:center;line-height:1.15;padding:6px 2px;font-weight:600}
+#tab-physio .sswitch button small{font-size:11px;font-weight:400;opacity:.75}
+#tab-physio .sswitch button:disabled{opacity:.4}
+#tab-physio .phase .pstart{align-self:flex-start;margin-top:6px}

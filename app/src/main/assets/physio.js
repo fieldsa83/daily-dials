@@ -193,14 +193,19 @@ function selDay(){return current;}
 function activeRows(letter){return S.program.filter(function(r){return r.active&&r.session===letter;});}
 function dayLog(k){for(var i=S.logs.length-1;i>=0;i--)if(S.logs[i].date===k)return S.logs[i];return null;}
 function repsOf(m){return (m.reps||[]).filter(function(x){return x!=null;});}
+function sessions(){var o=[];S.program.forEach(function(r){if(r.active&&o.indexOf(r.session)<0)o.push(r.session);});return o.sort();}
+function lastDone(letter,k){for(var i=S.logs.length-1;i>=0;i--){var L=S.logs[i];if(L.date<k&&L.letter===letter&&L.moves.length)return L.date;}return null;}
 function nextLetter(k){
+  var list=sessions();if(!list.length)return 'A';
   var prev=null;
   for(var i=S.logs.length-1;i>=0;i--)if(S.logs[i].date<k&&S.logs[i].moves.length){prev=S.logs[i];break;}
-  return prev&&prev.letter==='A'?'B':'A';
+  var ix=prev?list.indexOf(prev.letter):-1;
+  return ix<0?list[0]:list[(ix+1)%list.length];
 }
+function agoStr(d,k){if(!d)return 'not yet';var n=Math.round((parseD(k)-parseD(d))/864e5);return n===1?'yesterday':n+' days ago';}
 function letterFor(k){
   var L=dayLog(k);if(L)return L.letter;
-  if(S.pref&&S.pref.date===k)return S.pref.letter;
+  if(S.pref&&S.pref.date===k&&sessions().indexOf(S.pref.letter)>-1)return S.pref.letter;
   return nextLetter(k);
 }
 function lastFor(ex,before){
@@ -396,22 +401,65 @@ var PLAYI='<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" st
 var PHASES=[
  {n:1,name:'Rebuild',when:'Now → mid-December',
   why:'Get the back, hips and obliques used to regular work again without flare-ups. Reps before weight.',
-  week:'3 strength sessions (A, B, A… any days) · mobility every day · cardio 3× 20–30 min, easy to moderate (walk, bike).',
-  A:[['Single-leg RDL','hamstrings and glutes, one side at a time'],['Single-leg glute bridge','glute on each side, almost no spine load'],['Split squat','front-leg strength, knee and hip control'],['Side plank hip dips','obliques without twisting'],['Plank shoulder taps','core that resists twisting']],
-  B:[['Backpack RDL','the hip hinge with light load'],['Goblet squat','both legs, upright back'],['Band row','upper back and posture'],['Pallof press','anti-rotation core'],['Push-up','upper-body push']],
+  week:'3 strength sessions (A, B, A…, any days) · mobility every day · cardio 3× 20–30 min, easy to moderate (walk, bike).',
+  prog:DEFAULT_PROGRAM,
+  notes:{'Single-leg RDL':'hamstrings and glutes, one side at a time','Single-leg glute bridge':'glute on each side, almost no spine load','Split squat':'front-leg strength, knee and hip control','Side plank hip dips':'obliques without twisting','Plank shoulder taps':'core that resists twisting','RDL, loaded backpack':'the hip hinge with light load','Goblet squat':'both legs, upright back','Band row':'upper back and posture','Pallof press':'anti-rotation core','Push-up':'upper-body push'},
   aim:'3 sessions a week for 4 weeks · top of the rep range on most moves · no “too much” in the last 2 weeks · back pain mostly 2 or less.'},
  {n:2,name:'Load',when:'Mid-December → end of February',
   why:'Same patterns, now with dumbbells and cables at the gym so strength actually builds. Add 5 lb whenever you hit the top of the range twice.',
-  week:'3 strength sessions · mobility most days · cardio 3× 30 min, one of them harder.',
-  A:[['Dumbbell single-leg RDL',''],['Hip thrust with weight',''],['Rear-foot-elevated split squat',''],['Side plank with reach',''],['Bear-crawl shoulder taps','']],
-  B:[['Dumbbell RDL',''],['Dumbbell goblet squat',''],['Cable or seated row',''],['Cable Pallof press',''],['Dumbbell bench press or feet-raised push-up','']],
+  week:'3 strength sessions (A, B, A…) · mobility most days · cardio 3× 30 min, one of them harder.',
+  prog:[
+   ['A','Hinge','Dumbbell single-leg RDL',3,'8-10','','Dumbbell in the hand opposite the standing leg. Same hinge as before: back flat, hips square.',true],
+   ['A','Bridge','Hip thrust, weighted',3,'8-12','','Upper back on a bench, dumbbell or plate on the hips. Drive up until level, pause, lower slowly.',true],
+   ['A','Squat','Rear-foot-elevated split squat',3,'8-10','','Back foot on a bench. Drop the back knee straight down, drive up through the front heel.',true],
+   ['A','Side core','Side plank with reach',3,'8-12','','Side plank on the forearm. Reach the top arm under your body and back up without the hips dropping.',true],
+   ['A','Anti-twist','Bear crawl shoulder taps',3,'8-12','','On hands and toes, knees an inch off the floor. Tap opposite shoulders without the hips rocking.',true],
+   ['B','Hinge','Dumbbell RDL',3,'8-12','','Dumbbells along the thighs. Hips back, flat back, to just below the knees, then stand tall.',true],
+   ['B','Squat','Dumbbell goblet squat',3,'8-12','','Heavier dumbbell held at the chest. Sit between your heels, chest up.',true],
+   ['B','Pull','Seated cable row',3,'10-12','','Chest tall. Pull the handle to your ribs, squeeze the shoulder blades, return slowly.',true],
+   ['B','Anti-twist','Cable Pallof press',3,'10-12','','Cable at chest height beside you. Press straight out and back without turning.',true],
+   ['B','Push','Dumbbell bench press',3,'8-12','','Flat bench, feet down. Lower the dumbbells to chest level, press up. Wrists straight.',true]],
+  notes:{'Dumbbell single-leg RDL':'same hinge, now loaded','Hip thrust, weighted':'the main glute builder','Rear-foot-elevated split squat':'harder single-leg squat','Side plank with reach':'obliques, a little more range','Bear crawl shoulder taps':'harder anti-twist core','Dumbbell RDL':'heavier hinge for the back of the legs','Dumbbell goblet squat':'heavier squat','Seated cable row':'upper back','Cable Pallof press':'anti-rotation with more load','Dumbbell bench press':'upper-body push'},
   aim:'Weights going up every couple of weeks with no flare-ups · physiatrist review done.'},
  {n:3,name:'Strength',when:'March onward',
-  why:'Long-term general strength: heavier lifts, pulling and carrying. Rotation only once it’s cleared.',
-  week:'3 strength sessions · mobility as a warm-up · cardio 150 min a week.',
-  A:[['Trap-bar deadlift',''],['Bulgarian split squat',''],['Lat pulldown, then assisted pull-ups',''],['Suitcase carry',''],['Side plank variations','']],
-  B:[['Heavier goblet or front squat',''],['Heavy hip thrust',''],['One-arm dumbbell row',''],['Overhead press, if the shoulder is happy',''],['Rotation work, if Dr. Delaney clears it','']],
-  aim:'Review every 6 weeks and pick new targets.'}];
+  why:'Long-term strength, built on your old Day 1–4 routine: four workouts you rotate through, each with the old favourites plus a glute and a core move. Pick any day; the app suggests the next one in the cycle.',
+  week:'3–4 strength sessions a week (Day A, B, C, D in a cycle) · mobility as a warm-up · cardio 150 min a week. Curls and other arm work can come back once the elbow is happy.',
+  prog:[
+   ['A','Squat','Goblet squat, heavy',3,'8-10','','Your old Day 1 favourite. Heavy dumbbell at the chest, sit between the heels, drive up.',true],
+   ['A','Pull','Lat pulldown',3,'8-12','','Wide grip, chest up. Pull the bar to the top of your chest, control it back up.',true],
+   ['A','Push','Dumbbell bench press',3,'8-12','','Flat bench, feet down. Lower to chest level, press up.',true],
+   ['A','Glute','Hip thrust, weighted',3,'8-12','','Upper back on a bench, weight on the hips. Drive up until level, pause.',true],
+   ['A','Core','Side plank with reach',3,'8-12','','Reach under and back without the hips dropping. Both sides.',true],
+   ['B','Hinge','Trap-bar deadlift',3,'5-8','','Stand in the middle of the bar. Hips back, flat back, push the floor away, stand tall.',true],
+   ['B','Pull','One-arm dumbbell row',3,'8-12','','Hand and knee on a bench. Pull the dumbbell to your hip, don’t twist.',true],
+   ['B','Push','Push-up, feet raised',3,'8-15','','Feet on a bench, body in one line. Chest to just above the floor.',true],
+   ['B','Glute','Dumbbell single-leg RDL',3,'8-10','','Dumbbell in the opposite hand, hips square.',true],
+   ['B','Core','Cable Pallof press',3,'10-12','','Press out and back without turning.',true],
+   ['C','Squat','Bulgarian split squat',3,'8-10','','Back foot on a bench, dumbbells in hand. Straight down, drive through the front heel.',true],
+   ['C','Pull','Assisted pull-up',3,'5-8','','Band or machine. Pull your chest toward the bar, lower all the way.',true],
+   ['C','Push','Dumbbell shoulder press',3,'8-10','','Seated, back supported. Press overhead only if the shoulder is happy.',true],
+   ['C','Glute','Lateral band walk',3,'12-15','','Band above the knees, half squat. Step sideways, steps each way.',true],
+   ['C','Core','Suitcase carry',3,'20-30','','Heavy dumbbell in one hand, walk tall without leaning. Steps each side.',true],
+   ['D','Hinge','Dumbbell RDL',3,'8-12','','Dumbbells along the thighs, hips back, flat back.',true],
+   ['D','Pull','Seated cable row',3,'10-12','','Pull to the ribs, squeeze the shoulder blades.',true],
+   ['D','Push','Incline dumbbell press',3,'8-12','','Bench at about 30°. Lower to the upper chest, press up.',true],
+   ['D','Glute','Single-leg glute bridge',3,'10-15','','One foot down, drive through the heel. Add a dumbbell on the hip when easy.',true],
+   ['D','Core','Dead bug',3,'8-12','','On your back, arms up, knees over hips. Lower opposite arm and leg slowly, low back stays down.',true]],
+  notes:{'Goblet squat, heavy':'your old favourite, heavier','Lat pulldown':'back and arms, working toward pull-ups','Dumbbell bench press':'chest and arms','Hip thrust, weighted':'glutes','Side plank with reach':'obliques','Trap-bar deadlift':'the big lift for the whole back of the body','One-arm dumbbell row':'upper back, from your old sheet','Push-up, feet raised':'push, from your old sheet','Dumbbell single-leg RDL':'glutes and hamstrings, one side at a time','Cable Pallof press':'anti-rotation core','Bulgarian split squat':'single-leg strength','Assisted pull-up':'from your old sheet','Dumbbell shoulder press':'from your old sheet, if the shoulder is happy','Lateral band walk':'side of the hip, groin support','Suitcase carry':'core that resists leaning','Dumbbell RDL':'hinge, from your old sheet','Seated cable row':'upper back','Incline dumbbell press':'upper chest and shoulders','Single-leg glute bridge':'glutes, one side at a time','Dead bug':'deep core, back-friendly'},
+  aim:'Review every 6 weeks and pick new targets. Rotation work only once Dr. Delaney clears it.'}];
+function phaseRows(p){return p.prog.map(function(a){return {id:uid(),session:a[0],slot:a[1],exercise:a[2],sets:a[3],reps:a[4],next:a[5],cue:a[6],active:a[7],load:0};});}
+function currentPhase(){
+  var act=S.program.filter(function(r){return r.active;}).map(function(r){return r.exercise.toLowerCase();}),best=null,bs=0;
+  PHASES.forEach(function(p){var names=p.prog.filter(function(a){return a[7];}).map(function(a){return a[2].toLowerCase();});
+    var hit=act.filter(function(x){return names.indexOf(x)>-1;}).length,sc=act.length?hit/Math.max(act.length,names.length):0;
+    if(sc>bs){bs=sc;best=p;}});
+  return bs>=0.5?best:null;
+}
+function startPhase(n){
+  var p=PHASES.filter(function(x){return x.n===n;})[0];if(!p)return;
+  S.program=phaseRows(p);S.pref=null;saveMeta();saveProgram();
+  UI.banner=['Phase '+n+' started. Your Program tab in the sheet will update on the next sync.','var(--card)'];
+}
 function historyGrid(){
   var t=today(),days=[],i;
   for(i=13;i>=0;i--)days.push(iso(addDays(parseD(t),-i)));
@@ -457,6 +505,9 @@ function renderTab(){
 
   var done=L?L.moves.length:0;
   h+='<section class="card strc"><div class="prw" style="padding:0 16px 6px"><span class="t1">Strength \u00b7 Session '+esc(letter)+'</span><span class="small">'+done+' of '+rows.length+'</span></div>';
+  var sl=sessions(),locked=!!(L&&L.moves.length),sug=nextLetter(k);
+  if(sl.length>1)h+='<div class="pseg sswitch" role="radiogroup" aria-label="Session" style="grid-template-columns:repeat('+sl.length+',1fr);margin:2px 16px 8px">'+sl.map(function(x){
+    return '<button data-act="pick" data-v="'+esc(x)+'" role="radio" aria-checked="'+(x===letter)+'"'+(locked&&x!==letter?' disabled':'')+'>'+esc(x)+(x===sug&&!locked?' \u2022':'')+'<small>'+agoStr(lastDone(x,k),k)+'</small></button>';}).join('')+'</div>';
   if(!rows.length)h+='<div class="small" style="padding:6px 16px">No active moves in Session '+esc(letter)+'. Add some in Program.</div>';
   rows.forEach(function(r,ri){
     var e=entryFor(L,r),lf=lastFor(r.exercise,k),sub;
@@ -469,11 +520,11 @@ function renderTab(){
     h+='<div class="prw feelrow"><span class="small">How did it feel?</span><span class="fchips">'+
       ['easy','right','too'].map(function(f){return '<button class="fchip f-'+f+'" data-act="feel" data-v="'+f+'" aria-pressed="'+(L.feel===f)+'">'+FEEL[f]+'</button>';}).join('')+'</span></div>';
   }else{
-    h+='<div class="prw feelrow"><span class="small">Tap a move for how and why.</span><button class="link" data-act="swap">Do '+(letter==='A'?'B':'A')+' instead</button></div>';
+    h+='<div class="prw feelrow"><span class="small">Tap a move for how and why.</span></div>';
   }
   var sg=suggestions();
   h+='<button class="planrow" data-act="plan"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="#6b4f3f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 3 5-6"/></svg>'+
-    '<span class="nm" style="flex:1;font-size:15px">Plan details<small>Phase 1 of 3 \u00b7 Rebuild'+(sg.length?' \u00b7 '+sg.length+' ready to step up':'')+'</small></span>'+CHEVR+'</button></section>';
+    '<span class="nm" style="flex:1;font-size:15px">Plan details<small>'+(function(){var cp=currentPhase();return cp?'Phase '+cp.n+' of '+PHASES.length+' \u00b7 '+cp.name:'Your own program';})()+(sg.length?' \u00b7 '+sg.length+' ready to step up':'')+'</small></span>'+CHEVR+'</button></section>';
   if(sg.length){var s=sg[0];
     h+='<section class="sugg"><div style="font:500 16px var(--head)">Ready to move up'+(sg.length>1?' <span class="small">\u00b7 1 of '+sg.length+'</span>':'')+'</div><div style="font-size:14px">'+esc(s.text)+'</div><div class="btns"><button class="pill" style="min-height:40px;font-size:14px" data-act="up">'+s.yes+'</button><button class="ghost" data-act="notyet">Not yet</button></div></section>';}
   h+='<div class="prw" style="padding:0 4px"><span class="small">Moves come from the Program tab in your sheet.</span><button class="link" data-act="program">Program</button></div>';
@@ -491,12 +542,16 @@ function planSheet(){
     '<div class="shead"><h2>Your strength plan</h2><button id="sheetClose" class="xbtn" data-act="closeplan" aria-label="Close">&#215;</button></div>'+
     '<div class="pseg" role="tablist" aria-label="Plan sections" style="grid-template-columns:1fr 1fr">'+['Roadmap','Moves'].map(function(t){return '<button data-act="ptab" data-v="'+t+'" role="tab" aria-selected="'+(t===tab)+'" aria-checked="'+(t===tab)+'">'+t+'</button>';}).join('')+'</div>';
   if(tab==='Roadmap'){
-    h+='<div class="rulebox"><div class="lbl">Sessions vs phases</div><p><b>Session A and B</b> are two different workouts at the same level. You alternate them: log A today and your next strength day shows B. <b>Phases</b> are the months-long plan: each phase swaps in harder versions of the moves.</p></div>';
+    h+='<div class="rulebox"><div class="lbl">Sessions vs phases</div><p><b>Sessions</b> (A, B…) are different workouts at the same level. The app suggests the next one in the cycle (marked \u2022), but you can pick any of them above the strength list. <b>Phases</b> are the months-long plan. When you\u2019re ready, tap <b>Start this phase</b>: the moves swap in and your sheet\u2019s Program tab updates. No app update needed, and your history stays.</p></div>';
+    var cp=currentPhase();
     h+=PHASES.map(function(p){
-      var list=function(L){return '<ul class="plist">'+L.map(function(x){return '<li><b>'+esc(x[0])+'</b>'+(x[1]?' \u2014 '+esc(x[1]):'')+'</li>';}).join('')+'</ul>';};
-      return '<div class="phase'+(p.n===1?' on':'')+'"><div class="prw"><b>Phase '+p.n+' \u00b7 '+p.name+'</b>'+(p.n===1?'<span class="here">You are here</span>':'')+'</div><div class="pwhen">'+p.when+'</div>'+
-        '<p>'+esc(p.why)+'</p><p class="ex">'+esc(p.week)+'</p><div class="psub">Session A</div>'+list(p.A)+'<div class="psub">Session B</div>'+list(p.B)+
-        '<p class="ex"><b>Ready to move on when:</b> '+esc(p.aim)+'</p></div>';}).join('')+
+      var on=cp&&cp.n===p.n,by={};
+      p.prog.forEach(function(a){if(!a[7])return;(by[a[0]]=by[a[0]]||[]).push(a[2]);});
+      var list=function(L){return '<ul class="plist">'+L.map(function(x){var w=p.notes[x];return '<li><b>'+esc(x)+'</b>'+(w?' \u2014 '+esc(w):'')+'</li>';}).join('')+'</ul>';};
+      return '<div class="phase'+(on?' on':'')+'"><div class="prw"><b>Phase '+p.n+' \u00b7 '+p.name+'</b>'+(on?'<span class="here">You are here</span>':'')+'</div><div class="pwhen">'+p.when+'</div>'+
+        '<p>'+esc(p.why)+'</p><p class="ex">'+esc(p.week)+'</p>'+Object.keys(by).sort().map(function(L){return '<div class="psub">'+(p.n===3?'Day ':'Session ')+esc(L)+'</div>'+list(by[L]);}).join('')+
+        '<p class="ex"><b>Ready to move on when:</b> '+esc(p.aim)+'</p>'+
+        (on?'':'<button class="ghost pstart" data-act="startphase" data-n="'+p.n+'">'+(UI.confirm==='phase'+p.n?'Tap again to switch your moves to Phase '+p.n:'Start this phase')+'</button>')+'</div>';}).join('')+
       '<p class="small">My draft from what you\u2019ve told me, not medical advice. Go over it with your physio.</p>';
   }else{
     h+='<div class="rulebox"><div class="lbl">The rule for every move</div><p>Add reps until every set hits the top of the range. Do it twice, nothing \u201ctoo much\u201d, and the next step unlocks: +5 lb, or the next rung if it can\u2019t take weight. Two \u201ctoo much\u201d in a row: step back.</p></div>';
@@ -718,7 +773,8 @@ app.addEventListener('click',function(e){
     case 'play':UI.screen='move';UI.row=row.id;UI.banner=null;resetAnim();render();window.scrollTo(0,0);break;
     case 'gonext':UI.row=row.id;resetAnim();render();window.scrollTo(0,0);break;
     case 'back':UI.screen='tab';UI.exp=UI.row;resetAnim();render();break;
-    case 'swap':var sk=selDay(),cur=letterFor(sk);S.pref={letter:cur==='A'?'B':'A',date:sk};saveMeta();render();break;
+    case 'pick':var sk=selDay(),pl=dayLog(sk);if(pl&&pl.moves.length)break;S.pref={letter:b.dataset.v,date:sk};if(pl)pl.letter=b.dataset.v;saveMeta();render();break;
+    case 'startphase':var pn=+b.dataset.n;if(UI.confirm!=='phase'+pn){UI.confirm='phase'+pn;render();break;}UI.confirm=null;startPhase(pn);UI.planOpen=false;render();break;
     case 'feel':var L=dayLog(selDay());if(L){L.feel=L.feel===b.dataset.v?null:b.dataset.v;storeLog(L);
       UI.banner=L.feel==='too'?['Noted as too much. No move-up suggestions for 7 days; repeat these reps next time.','var(--lamber)']:null;render();}break;
     case 'up':moveUp(suggestions()[0]);break;
